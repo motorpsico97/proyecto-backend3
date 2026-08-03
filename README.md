@@ -26,7 +26,7 @@ Backend ecommerce basico con Express + MongoDB + JWT + cookies.
 
 ## Base URL
 
-- http://localhost:3000/api
+- http://localhost:8080/api
 
 ## Rutas
 
