@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const User = require('../src/models/User');
 const {
     createUser,
     getUsers,
@@ -7,8 +6,9 @@ const {
     updateUser,
     deleteUser,
 } = require('../src/controllers/user.controller');
+const dao = require('../src/dao');
 
-jest.mock('../src/models/User');
+jest.mock('../src/dao');
 
 const createRes = () => {
     const res = {};
@@ -42,7 +42,7 @@ describe('user.controller unit', () => {
     });
 
     test('createUser devuelve 400 por email duplicado', async () => {
-        User.findOne.mockResolvedValue({ _id: 'exists' });
+        dao.findUserByEmailDao.mockResolvedValue({ _id: 'exists' });
 
         const req = { body: { name: 'A', email: 'x@mail.com', password: '123456' } };
         const res = createRes();
@@ -55,8 +55,8 @@ describe('user.controller unit', () => {
     });
 
     test('createUser crea usuario admin cuando role es admin', async () => {
-        User.findOne.mockResolvedValue(null);
-        User.create.mockResolvedValue({
+        dao.findUserByEmailDao.mockResolvedValue(null);
+        dao.createUserDao.mockResolvedValue({
             _id: '1',
             name: 'Admin',
             email: 'admin@mail.com',
@@ -71,15 +71,15 @@ describe('user.controller unit', () => {
 
         await createUser(req, res, next);
 
-        expect(User.create).toHaveBeenCalledWith(
+        expect(dao.createUserDao).toHaveBeenCalledWith(
             expect.objectContaining({ role: 'admin' })
         );
         expect(res.status).toHaveBeenCalledWith(201);
     });
 
     test('createUser usa role user por defecto', async () => {
-        User.findOne.mockResolvedValue(null);
-        User.create.mockResolvedValue({
+        dao.findUserByEmailDao.mockResolvedValue(null);
+        dao.createUserDao.mockResolvedValue({
             _id: '1',
             name: 'User',
             email: 'user@mail.com',
@@ -94,14 +94,14 @@ describe('user.controller unit', () => {
 
         await createUser(req, res, next);
 
-        expect(User.create).toHaveBeenCalledWith(
+        expect(dao.createUserDao).toHaveBeenCalledWith(
             expect.objectContaining({ role: 'user' })
         );
     });
 
     test('createUser llama next en error inesperado', async () => {
         const error = new Error('boom');
-        User.findOne.mockRejectedValue(error);
+        dao.findUserByEmailDao.mockRejectedValue(error);
 
         const req = { body: { name: 'A', email: 'x@mail.com', password: '123456' } };
         const res = createRes();
@@ -114,9 +114,7 @@ describe('user.controller unit', () => {
 
     test('getUsers devuelve lista de usuarios', async () => {
         const users = [{ name: 'U1' }, { name: 'U2' }];
-        User.find.mockReturnValue({
-            select: jest.fn().mockResolvedValue(users),
-        });
+        dao.getUsersDao.mockResolvedValue(users);
 
         const req = {};
         const res = createRes();
@@ -130,9 +128,7 @@ describe('user.controller unit', () => {
 
     test('getUsers llama next en error inesperado', async () => {
         const error = new Error('boom');
-        User.find.mockReturnValue({
-            select: jest.fn().mockRejectedValue(error),
-        });
+        dao.getUsersDao.mockRejectedValue(error);
 
         const req = {};
         const res = createRes();
@@ -144,9 +140,7 @@ describe('user.controller unit', () => {
     });
 
     test('getUserById devuelve 404 si no existe', async () => {
-        User.findById.mockReturnValue({
-            select: jest.fn().mockResolvedValue(null),
-        });
+        dao.getUserByIdDao.mockResolvedValue(null);
 
         const req = { params: { id: '507f191e810c19729de860ea' } };
         const res = createRes();
@@ -160,9 +154,7 @@ describe('user.controller unit', () => {
 
     test('getUserById llama next en error inesperado', async () => {
         const error = new Error('boom');
-        User.findById.mockReturnValue({
-            select: jest.fn().mockRejectedValue(error),
-        });
+        dao.getUserByIdDao.mockRejectedValue(error);
 
         const req = { params: { id: 'x' } };
         const res = createRes();
@@ -183,9 +175,7 @@ describe('user.controller unit', () => {
             save: jest.fn().mockResolvedValue(undefined),
         };
 
-        User.findById.mockReturnValue({
-            select: jest.fn().mockResolvedValue(userDoc),
-        });
+        dao.getUserByIdWithPasswordDao.mockResolvedValue(userDoc);
 
         const req = {
             params: { id: '507f191e810c19729de860ea' },
@@ -211,9 +201,7 @@ describe('user.controller unit', () => {
             save: jest.fn().mockResolvedValue(undefined),
         };
 
-        User.findById.mockReturnValue({
-            select: jest.fn().mockResolvedValue(userDoc),
-        });
+        dao.getUserByIdWithPasswordDao.mockResolvedValue(userDoc);
 
         const req = {
             params: { id: '507f191e810c19729de860ea' },
@@ -239,9 +227,7 @@ describe('user.controller unit', () => {
             save: jest.fn().mockResolvedValue(undefined),
         };
 
-        User.findById.mockReturnValue({
-            select: jest.fn().mockResolvedValue(userDoc),
-        });
+        dao.getUserByIdWithPasswordDao.mockResolvedValue(userDoc);
 
         const req = {
             params: { id: '507f191e810c19729de860ea' },
@@ -258,9 +244,7 @@ describe('user.controller unit', () => {
 
     test('updateUser llama next en error inesperado', async () => {
         const error = new Error('boom');
-        User.findById.mockReturnValue({
-            select: jest.fn().mockRejectedValue(error),
-        });
+        dao.getUserByIdWithPasswordDao.mockRejectedValue(error);
 
         const req = { params: { id: 'x' }, body: {} };
         const res = createRes();
@@ -282,12 +266,12 @@ describe('user.controller unit', () => {
 
         expect(res.status).toHaveBeenCalledWith(404);
         expect(res.json).toHaveBeenCalledWith({ message: 'Usuario no encontrado.' });
-        expect(User.findById).not.toHaveBeenCalled();
+        expect(dao.findUserByIdDao).not.toHaveBeenCalled();
     });
 
     test('deleteUser devuelve 404 con id valido no existente', async () => {
         objectIdSpy.mockReturnValue(true);
-        User.findById.mockResolvedValue(null);
+        dao.findUserByIdDao.mockResolvedValue(null);
 
         const req = { params: { id: '507f191e810c19729de860ea' } };
         const res = createRes();
@@ -302,7 +286,7 @@ describe('user.controller unit', () => {
     test('deleteUser llama next en error inesperado', async () => {
         const error = new Error('boom');
         objectIdSpy.mockReturnValue(true);
-        User.findById.mockRejectedValue(error);
+        dao.findUserByIdDao.mockRejectedValue(error);
 
         const req = { params: { id: '507f191e810c19729de860ea' } };
         const res = createRes();

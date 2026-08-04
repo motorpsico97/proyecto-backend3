@@ -1,5 +1,12 @@
 const mongoose = require('mongoose');
-const User = require('../models/User');
+const {
+    createUserDao,
+    findUserByEmailDao,
+    getUsersDao,
+    getUserByIdDao,
+    getUserByIdWithPasswordDao,
+    findUserByIdDao,
+} = require('../dao');
 
 const createUser = async (req, res, next) => {
     try {
@@ -9,12 +16,12 @@ const createUser = async (req, res, next) => {
             return res.status(400).json({ message: 'name, email y password son obligatorios.' });
         }
 
-        const exists = await User.findOne({ email });
+        const exists = await findUserByEmailDao(email);
         if (exists) {
             return res.status(400).json({ message: 'El email ya esta registrado.' });
         }
 
-        const user = await User.create({
+        const user = await createUserDao({
             name,
             email,
             password,
@@ -37,7 +44,7 @@ const createUser = async (req, res, next) => {
 
 const getUsers = async (req, res, next) => {
     try {
-        const users = await User.find().select('-password');
+        const users = await getUsersDao();
         return res.status(200).json(users);
     } catch (error) {
         return next(error);
@@ -46,7 +53,7 @@ const getUsers = async (req, res, next) => {
 
 const getUserById = async (req, res, next) => {
     try {
-        const user = await User.findById(req.params.id).select('-password');
+        const user = await getUserByIdDao(req.params.id);
 
         if (!user) {
             return res.status(404).json({ message: 'Usuario no encontrado.' });
@@ -62,7 +69,7 @@ const updateUser = async (req, res, next) => {
     try {
         const { name, email, password, role } = req.body;
 
-        const user = await User.findById(req.params.id).select('+password');
+        const user = await getUserByIdWithPasswordDao(req.params.id);
         if (!user) {
             return res.status(404).json({ message: 'Usuario no encontrado.' });
         }
@@ -94,7 +101,7 @@ const deleteUser = async (req, res, next) => {
             return res.status(404).json({ message: 'Usuario no encontrado.' });
         }
 
-        const user = await User.findById(req.params.id);
+        const user = await findUserByIdDao(req.params.id);
 
         if (!user) {
             return res.status(404).json({ message: 'Usuario no encontrado.' });

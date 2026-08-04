@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>48/48</span>
+                <span class='fraction'>40/40</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>45/45</span>
+                <span class='fraction'>40/40</span>
             </div>
         
             
@@ -166,7 +166,15 @@
 <a name='L101'></a><a href='#L101'>101</a>
 <a name='L102'></a><a href='#L102'>102</a>
 <a name='L103'></a><a href='#L103'>103</a>
-<a name='L104'></a><a href='#L104'>104</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">5x</span>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
@@ -223,15 +231,13 @@
 <span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -253,8 +259,6 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -270,7 +274,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const mongoose = require('mongoose');
-const Product = require('../models/Product');
+const {
+    createProductDao,
+    getProductsDao,
+    getProductByIdDao,
+    updateProductDao,
+    deleteProductDao,
+} = require('../dao');
 &nbsp;
 const createProduct = async (req, res, next) =&gt; {
     try {
@@ -280,7 +290,7 @@ const createProduct = async (req, res, next) =&gt; {
             return res.status(400).json({ message: 'title y price son obligatorios.' });
         }
 &nbsp;
-        const product = await Product.create({
+        const product = await createProductDao({
             title,
             price,
             stock,
@@ -297,7 +307,7 @@ const createProduct = async (req, res, next) =&gt; {
 &nbsp;
 const getProducts = async (req, res, next) =&gt; {
     try {
-        const products = await Product.find();
+        const products = await getProductsDao();
         return res.status(200).json({
             payload: 'Lista de productos',
             products,
@@ -309,7 +319,7 @@ const getProducts = async (req, res, next) =&gt; {
 &nbsp;
 const getProductById = async (req, res, next) =&gt; {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await getProductByIdDao(req.params.id);
 &nbsp;
         if (!product) {
             return res.status(404).json({ message: 'Producto no encontrado.' });
@@ -325,16 +335,14 @@ const updateProduct = async (req, res, next) =&gt; {
     try {
         const { title, price, stock } = req.body;
 &nbsp;
-        const product = await Product.findById(req.params.id);
+        const product = await updateProductDao(req.params.id, {
+            ...(title !== undefined ? { title } : {}),
+            ...(price !== undefined ? { price } : {}),
+            ...(stock !== undefined ? { stock } : {}),
+        });
         if (!product) {
             return res.status(404).json({ message: 'Producto no encontrado.' });
         }
-&nbsp;
-        if (title !== undefined) product.title = title;
-        if (price !== undefined) product.price = price;
-        if (stock !== undefined) product.stock = stock;
-&nbsp;
-        await product.save();
 &nbsp;
         return res.status(200).json({
             message: 'Producto actualizado.',
@@ -351,13 +359,11 @@ const deleteProduct = async (req, res, next) =&gt; {
             return res.status(404).json({ message: 'Producto no encontrado.' });
         }
 &nbsp;
-        const product = await Product.findById(req.params.id);
+        const product = await deleteProductDao(req.params.id);
 &nbsp;
         if (!product) {
             return res.status(404).json({ message: 'Producto no encontrado.' });
         }
-&nbsp;
-        await product.deleteOne();
 &nbsp;
         return res.status(200).json({ message: 'Producto eliminado.' });
     } catch (error) {
@@ -379,7 +385,7 @@ module.exports = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-04T00:09:07.731Z
+                at 2026-08-04T02:53:35.480Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

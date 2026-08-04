@@ -1,7 +1,7 @@
-const Product = require('../src/models/Product');
 const { createProduct, getProducts, getProductById, updateProduct, deleteProduct } = require('../src/controllers/product.controller');
+const dao = require('../src/dao');
 
-jest.mock('../src/models/Product');
+jest.mock('../src/dao');
 
 const createRes = () => {
     const res = {};
@@ -17,7 +17,7 @@ describe('product.controller unit', () => {
 
     test('createProduct llama next en error inesperado', async () => {
         const error = new Error('boom');
-        Product.create.mockRejectedValue(error);
+        dao.createProductDao.mockRejectedValue(error);
 
         const req = { body: { title: 'X', price: 100, stock: 1 } };
         const res = createRes();
@@ -30,7 +30,7 @@ describe('product.controller unit', () => {
 
     test('getProducts llama next en error inesperado', async () => {
         const error = new Error('boom');
-        Product.find.mockRejectedValue(error);
+        dao.getProductsDao.mockRejectedValue(error);
 
         const req = {};
         const res = createRes();
@@ -43,7 +43,7 @@ describe('product.controller unit', () => {
 
     test('getProductById llama next en error inesperado', async () => {
         const error = new Error('boom');
-        Product.findById.mockRejectedValue(error);
+        dao.getProductByIdDao.mockRejectedValue(error);
 
         const req = { params: { id: 'x' } };
         const res = createRes();
@@ -55,14 +55,13 @@ describe('product.controller unit', () => {
     });
 
     test('updateProduct actualiza title/price/stock cuando vienen definidos', async () => {
-        const productDoc = {
-            title: 'Old',
-            price: 100,
-            stock: 1,
-            save: jest.fn().mockResolvedValue(undefined),
+        const updatedProduct = {
+            title: 'New',
+            price: 500,
+            stock: 10,
         };
 
-        Product.findById.mockResolvedValue(productDoc);
+        dao.updateProductDao.mockResolvedValue(updatedProduct);
 
         const req = { params: { id: '507f191e810c19729de860ea' }, body: { title: 'New', price: 500, stock: 10 } };
         const res = createRes();
@@ -70,21 +69,26 @@ describe('product.controller unit', () => {
 
         await updateProduct(req, res, next);
 
-        expect(productDoc.title).toBe('New');
-        expect(productDoc.price).toBe(500);
-        expect(productDoc.stock).toBe(10);
+        expect(dao.updateProductDao).toHaveBeenCalledWith('507f191e810c19729de860ea', {
+            title: 'New',
+            price: 500,
+            stock: 10,
+        });
         expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith({
+            message: 'Producto actualizado.',
+            product: updatedProduct,
+        });
     });
 
     test('updateProduct mantiene price y stock cuando no vienen definidos', async () => {
-        const productDoc = {
-            title: 'Old',
+        const updatedProduct = {
+            title: 'OnlyTitle',
             price: 100,
             stock: 1,
-            save: jest.fn().mockResolvedValue(undefined),
         };
 
-        Product.findById.mockResolvedValue(productDoc);
+        dao.updateProductDao.mockResolvedValue(updatedProduct);
 
         const req = { params: { id: '507f191e810c19729de860ea' }, body: { title: 'OnlyTitle' } };
         const res = createRes();
@@ -92,15 +96,19 @@ describe('product.controller unit', () => {
 
         await updateProduct(req, res, next);
 
-        expect(productDoc.title).toBe('OnlyTitle');
-        expect(productDoc.price).toBe(100);
-        expect(productDoc.stock).toBe(1);
+        expect(dao.updateProductDao).toHaveBeenCalledWith('507f191e810c19729de860ea', {
+            title: 'OnlyTitle',
+        });
         expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith({
+            message: 'Producto actualizado.',
+            product: updatedProduct,
+        });
     });
 
     test('updateProduct llama next en error inesperado', async () => {
         const error = new Error('boom');
-        Product.findById.mockRejectedValue(error);
+        dao.updateProductDao.mockRejectedValue(error);
 
         const req = { params: { id: 'x' }, body: {} };
         const res = createRes();
@@ -113,7 +121,7 @@ describe('product.controller unit', () => {
 
     test('deleteProduct llama next en error inesperado', async () => {
         const error = new Error('boom');
-        Product.findById.mockRejectedValue(error);
+        dao.deleteProductDao.mockRejectedValue(error);
 
         const req = { params: { id: '507f191e810c19729de860ea' } };
         const res = createRes();

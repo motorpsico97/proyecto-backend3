@@ -1,37 +1,58 @@
 # Proyecto Nuevo - Ecommerce API
 
-API REST para gestion de usuarios, autenticacion y productos.
+API REST para la gestión de usuarios, autenticación y productos, construida con Node.js, Express y MongoDB.
 
-Stack principal:
+## Stack principal
+
 - Node.js + Express
 - MongoDB + Mongoose
-- JWT (en cookie httpOnly y Bearer token)
-- Swagger para documentacion de endpoints
-- Jest + Supertest para pruebas
+- JWT en cookie httpOnly y Bearer token
+- Swagger para documentación de endpoints
+- Jest + Supertest para pruebas unitarias e integradas
 
-## Caracteristicas
+## Características
 
-- Registro, login, perfil y logout.
-- Autorizacion por roles (user/admin).
-- CRUD de usuarios (solo admin).
-- CRUD de productos (lectura publica, escritura admin).
-- Middleware de errores centralizado.
-- Documentacion interactiva via Swagger.
+- Registro, login, perfil y logout
+- Autorización por roles (user/admin)
+- CRUD de usuarios (solo admin)
+- CRUD de productos (lectura pública, escritura admin)
+- Middleware de errores centralizado
+- Health check para verificar que la API responde
+- Capa DAO para separar acceso a datos de la lógica de controladores
+- Utilidad de hashing para contraseñas
+- Tests con mocks y fakes para aislar dependencias externas
 
 ## Estructura del proyecto
 
+```text
 src/
-- app.js: configuracion de Express, middlewares y rutas.
-- server.js: arranque del servidor y conexion a MongoDB.
-- config/db.js: conexion a base de datos.
-- controllers/: logica de negocio.
-- middlewares/: auth y manejo de errores.
-- models/: esquemas Mongoose.
-- routes/: rutas agrupadas por recurso.
-- docs/swagger.js: configuracion OpenAPI.
+├── app.js                 # Configuración de Express, middlewares y rutas base
+├── server.js              # Arranque del servidor y carga de variables de entorno
+├── config/
+│   └── db.js              # Conexión a MongoDB
+├── controllers/           # Lógica de negocio por recurso
+├── dao/                   # Capa de acceso a datos (DAO)
+├── docs/                  # Configuración Swagger
+├── middlewares/           # Auth y manejo de errores
+├── models/                # Esquemas Mongoose
+├── routes/                # Rutas agrupadas por recurso
+├── utils/                 # Utilidades compartidas (hashing, etc.)
+└── .env                   # Variables de entorno locales
 
 tests/
-- pruebas de integracion y unitarias con Jest.
+├── app.test.js
+├── auth.controller.unit.test.js
+├── auth.test.js
+├── dao.test.js
+├── middlewares.test.js
+├── product.controller.test.js
+├── product.dao.test.js
+├── products.test.js
+├── user.controller.test.js
+├── user.dao.test.js
+├── users.test.js
+└── setup/
+```
 
 ## Requisitos
 
@@ -42,24 +63,25 @@ tests/
 
 ## Variables de entorno
 
-Este proyecto no trae .env.example actualmente. Crea un archivo llamado .env en la raiz con el siguiente contenido:
+Crea un archivo llamado .env dentro de la carpeta src con este contenido:
 
 ```env
 PORT=8080
-MONGO_URI=mongodb://localhost:27017/proyecto_nuevo
-JWT_SECRET=una_clave_super_segura
-JWT_EXPIRES_IN=1d
 NODE_ENV=development
+MONGO_URI=mongodb://127.0.0.1:27017/ecommerce
+JWT_SECRET=supersecretkey123
+JWT_EXPIRES_IN=1d
 ```
 
-Descripcion rapida:
-- PORT: puerto HTTP de la API.
-- MONGO_URI: cadena de conexion de MongoDB.
-- JWT_SECRET: clave para firmar tokens.
-- JWT_EXPIRES_IN: vencimiento del JWT (ej: 1d, 12h).
-- NODE_ENV: development, test o production.
+### Descripción rápida
 
-## Instalacion y ejecucion local
+- PORT: puerto HTTP de la API
+- NODE_ENV: development, test o production
+- MONGO_URI: cadena de conexión de MongoDB
+- JWT_SECRET: clave para firmar tokens
+- JWT_EXPIRES_IN: tiempo de expiración del JWT
+
+## Instalación y ejecución local
 
 1. Instalar dependencias:
 
@@ -67,7 +89,7 @@ Descripcion rapida:
 npm install
 ```
 
-2. Crear el archivo .env con los valores anteriores.
+2. Crear el archivo .env en src/ con las variables anteriores.
 
 3. Levantar en desarrollo:
 
@@ -81,43 +103,46 @@ npm run dev
 npm start
 ```
 
-Servidor:
+### URLs útiles
+
 - API base: http://localhost:8080/api
-- Health basico: http://localhost:8080/
+- Health check: http://localhost:8080/health
+- Health check API: http://localhost:8080/api/health
+- Swagger: http://localhost:8080/api/docs
 
-## Documentacion Swagger
+## Autenticación y autorización
 
-- URL local: http://localhost:8080/api/docs
-- Nota: en produccion esta deshabilitada (retorna 403).
+La API acepta tokens de dos formas:
 
-## Autenticacion y autorizacion
-
-La API acepta token de 2 formas:
-- Cookie httpOnly llamada token.
+- Cookie httpOnly llamada token
 - Header Authorization: Bearer <token>
 
 Roles:
-- user: acceso a rutas autenticadas de perfil.
-- admin: acceso a CRUD de usuarios y escritura de productos.
+
+- user: acceso a rutas autenticadas de perfil
+- admin: acceso a CRUD de usuarios y escritura de productos
 
 ## Endpoints
 
 Base URL: /api
 
-Auth:
+### Auth
+
 - POST /auth/register
 - POST /auth/login
 - GET /auth/me
 - POST /auth/logout
 
-Users (admin):
+### Users (admin)
+
 - POST /users
 - GET /users
 - GET /users/:id
 - PUT /users/:id
 - DELETE /users/:id
 
-Products:
+### Products
+
 - GET /products
 - GET /products/:id
 - POST /products (admin)
@@ -126,188 +151,246 @@ Products:
 
 ## Ejemplos de uso en Postman
 
-Sugerencia: crea un Environment en Postman con estas variables.
+Configura un Environment con:
 
 - baseUrl: http://localhost:8080/api
-- token: vacio al inicio
+- token: vacío al inicio
 
 ### 1) Registrar usuario
 
-- Method: POST
-- URL: {{baseUrl}}/auth/register
-- Headers:
-   - Content-Type: application/json
-- Body (raw, JSON):
+```http
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+```
 
 ```json
 {
-   "name": "Admin",
-   "email": "admin@mail.com",
-   "password": "123456",
-   "role": "admin"
+  "name": "Admin",
+  "email": "admin@mail.com",
+  "password": "123456",
+  "role": "admin"
 }
 ```
 
-### 2) Login y guardar token para siguientes requests
+### 2) Login
 
-- Method: POST
-- URL: {{baseUrl}}/auth/login
-- Headers:
-   - Content-Type: application/json
-- Body (raw, JSON):
+```http
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+```
 
 ```json
 {
-   "email": "admin@mail.com",
-   "password": "123456"
+  "email": "admin@mail.com",
+  "password": "123456"
 }
 ```
 
-En la respuesta obtendras un campo token. Guardalo en la variable token del Environment.
+Guarda el token recibido en la variable token del Environment.
 
-Opcional (automatico), en la pestana Tests de esta request:
+### 3) Obtener perfil
 
-```javascript
-const jsonData = pm.response.json();
-if (jsonData.token) {
-   pm.environment.set("token", jsonData.token);
-}
+```http
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
 ```
 
-### 3) Obtener perfil del usuario autenticado
+### 4) Logout
 
-- Method: GET
-- URL: {{baseUrl}}/auth/me
-- Authorization: Bearer Token
-- Token: {{token}}
+```http
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+```
 
-Nota: tambien puedes usar la cookie token que devuelve login, si tienes habilitado el cookie jar de Postman.
+### 5) Crear un usuario (solo admin)
 
-### 4) Crear producto (solo admin)
-
-- Method: POST
-- URL: {{baseUrl}}/products
-- Authorization: Bearer Token
-- Token: {{token}}
-- Headers:
-   - Content-Type: application/json
-- Body (raw, JSON):
+```http
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+```
 
 ```json
 {
-   "title": "Teclado mecanico",
-   "price": 45000,
-   "stock": 15
+  "name": "Usuario Nuevo",
+  "email": "usuario@mail.com",
+  "password": "123456",
+  "role": "user"
 }
 ```
 
-### 5) Listar productos (publico)
+### 6) Listar usuarios (solo admin)
 
-- Method: GET
-- URL: {{baseUrl}}/products
+```http
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+```
 
-### 6) Ejemplos extra recomendados
+### 7) Obtener un usuario por ID (solo admin)
 
-Actualizar producto:
-- Method: PUT
-- URL: {{baseUrl}}/products/{{productId}}
-- Authorization: Bearer Token
-- Token: {{token}}
-- Body (raw, JSON):
+```http
+GET {{baseUrl}}/users/507f191e810c19729de860ea
+Authorization: Bearer {{token}}
+```
+
+### 8) Actualizar un usuario (solo admin)
+
+```http
+PUT {{baseUrl}}/users/507f191e810c19729de860ea
+Authorization: Bearer {{token}}
+Content-Type: application/json
+```
 
 ```json
 {
-   "title": "Teclado mecanico RGB",
-   "price": 52000,
-   "stock": 10
+  "name": "Usuario Actualizado",
+  "role": "admin"
 }
 ```
 
-Eliminar producto:
-- Method: DELETE
-- URL: {{baseUrl}}/products/{{productId}}
-- Authorization: Bearer Token
-- Token: {{token}}
+### 9) Eliminar un usuario (solo admin)
+
+```http
+DELETE {{baseUrl}}/users/507f191e810c19729de860ea
+Authorization: Bearer {{token}}
+```
+
+### 10) Crear un producto (solo admin)
+
+```http
+POST {{baseUrl}}/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+```
+
+```json
+{
+  "title": "Teclado mecánico",
+  "price": 45000,
+  "stock": 15
+}
+```
+
+### 11) Listar productos (público)
+
+```http
+GET {{baseUrl}}/products
+```
+
+### 12) Obtener un producto por ID
+
+```http
+GET {{baseUrl}}/products/507f191e810c19729de860ea
+```
+
+### 13) Actualizar un producto (solo admin)
+
+```http
+PUT {{baseUrl}}/products/507f191e810c19729de860ea
+Authorization: Bearer {{token}}
+Content-Type: application/json
+```
+
+```json
+{
+  "title": "Teclado mecánico RGB",
+  "price": 52000,
+  "stock": 10
+}
+```
+
+### 14) Eliminar un producto (solo admin)
+
+```http
+DELETE {{baseUrl}}/products/507f191e810c19729de860ea
+Authorization: Bearer {{token}}
+```
 
 ## Pruebas
 
-Ejecutar suite de tests:
+Ejecutar la suite completa:
 
 ```bash
 npm test
 ```
 
-Cobertura:
+Ejecutar un archivo de pruebas específico:
+
+```bash
+npx jest tests/auth.test.js
+```
+
+Ejecutar varios archivos específicos:
+
+```bash
+npx jest tests/user.controller.test.js tests/product.controller.test.js
+```
+
+Ejecutar un archivo en modo detallado y sin watch:
+
+```bash
+npx jest tests/app.test.js --runInBand
+```
+
+Generar cobertura:
 
 ```bash
 npm run test:coverage
 ```
 
-La carpeta coverage/ se genera automaticamente con el reporte.
-
 ## Docker
 
-El proyecto incluye Dockerfile.
+El proyecto incluye un Dockerfile listo para construir una imagen de la API.
 
-### Build
+### 1) Construir la imagen
 
 ```bash
 docker build -t proyecto-nuevo:1.0.0 .
 ```
 
-### Run
-
-Opcion recomendada (alinear contenedor y puerto 3000):
+### 2) Ejecutar el contenedor
 
 ```bash
-docker run --name proyecto-nuevo-api --env-file .env -e PORT=3000 -p 3000:3000 proyecto-nuevo:1.0.0
+docker run --name proyecto-nuevo-api --env-file src/.env -e PORT=3000 -p 3000:3000 proyecto-nuevo:1.0.0
 ```
 
-Alternativa usando puerto por defecto de la app (8080):
+### 3) Verificar que el contenedor está corriendo
 
 ```bash
-docker run --name proyecto-nuevo-api --env-file .env -p 8080:8080 proyecto-nuevo:1.0.0
+docker ps
 ```
 
-## Publicar imagen en Docker Hub
-
-1. Login:
+### 4) Ver logs del contenedor
 
 ```bash
-docker login
+docker logs -f proyecto-nuevo-api
 ```
 
-2. Tag:
+### 5) Detener y eliminar el contenedor
 
 ```bash
-docker tag proyecto-nuevo:1.0.0 TU_USUARIO/proyecto-nuevo:1.0.0
-docker tag proyecto-nuevo:1.0.0 TU_USUARIO/proyecto-nuevo:latest
+docker stop proyecto-nuevo-api
+docker rm proyecto-nuevo-api
 ```
 
-3. Push:
+### 6) Usar un puerto distinto
 
 ```bash
-docker push TU_USUARIO/proyecto-nuevo:1.0.0
-docker push TU_USUARIO/proyecto-nuevo:latest
+docker run --name proyecto-nuevo-api --env-file src/.env -e PORT=8080 -p 8080:8080 proyecto-nuevo:1.0.0
 ```
 
-Ejemplo real:
+### 7) Acceder a la API desde el host
 
-```bash
-docker push motorpsico97/proyectofinal:1.0.0
-```
+Una vez levantado el contenedor, la API quedará disponible en:
+
+- http://localhost:3000/api
+- http://localhost:3000/health
+- http://localhost:3000/api/docs
 
 ## Errores comunes
 
-- Error de conexion MongoDB:
-   revisa MONGO_URI y que la instancia este disponible.
-
-- 401 No autorizado:
-   falta token en cookie o Bearer, o el token expiro.
-
-- 403 No tienes permisos:
-   el usuario autenticado no tiene rol admin.
-
-- denied al hacer docker push:
-   verifica docker login, nombre del repo y permisos en Docker Hub.
+- Error de conexión a MongoDB: revisa MONGO_URI y que la instancia esté disponible.
+- 401 No autorizado: falta token en cookie o Bearer, o el token expiró.
+- 403 No tienes permisos: el usuario autenticado no tiene rol admin.
+- Error al hacer docker push: verifica docker login, nombre del repo y permisos en Docker Hub.
 

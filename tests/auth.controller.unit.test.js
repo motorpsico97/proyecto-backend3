@@ -1,8 +1,8 @@
-const User = require('../src/models/User');
 const jwt = require('jsonwebtoken');
 const { register, login, me } = require('../src/controllers/auth.controller');
+const dao = require('../src/dao');
 
-jest.mock('../src/models/User');
+jest.mock('../src/dao');
 jest.mock('jsonwebtoken');
 
 const createRes = () => {
@@ -20,7 +20,7 @@ describe('auth.controller unit', () => {
 
     test('register llama next en error inesperado', async () => {
         const error = new Error('boom');
-        User.findOne.mockRejectedValue(error);
+        dao.findUserByEmailDao.mockRejectedValue(error);
 
         const req = { body: { name: 'A', email: 'a@mail.com', password: '123456' } };
         const res = createRes();
@@ -32,9 +32,7 @@ describe('auth.controller unit', () => {
     });
 
     test('login devuelve 401 cuando usuario no existe', async () => {
-        User.findOne.mockReturnValue({
-            select: jest.fn().mockResolvedValue(null),
-        });
+        dao.findUserByEmailWithPasswordDao.mockResolvedValue(null);
 
         const req = { body: { email: 'none@mail.com', password: '123456' } };
         const res = createRes();
@@ -49,9 +47,7 @@ describe('auth.controller unit', () => {
 
     test('login llama next en error inesperado', async () => {
         const error = new Error('boom');
-        User.findOne.mockReturnValue({
-            select: jest.fn().mockRejectedValue(error),
-        });
+        dao.findUserByEmailWithPasswordDao.mockRejectedValue(error);
 
         const req = { body: { email: 'a@mail.com', password: '123456' } };
         const res = createRes();
@@ -64,9 +60,7 @@ describe('auth.controller unit', () => {
 
     test('me llama next en error inesperado', async () => {
         const error = new Error('boom');
-        User.findById.mockReturnValue({
-            select: jest.fn().mockRejectedValue(error),
-        });
+        dao.getUserByIdDao.mockRejectedValue(error);
 
         const req = { user: { _id: '507f191e810c19729de860ea' } };
         const res = createRes();
@@ -81,8 +75,8 @@ describe('auth.controller unit', () => {
         const previous = process.env.JWT_EXPIRES_IN;
         delete process.env.JWT_EXPIRES_IN;
 
-        User.findOne.mockResolvedValue(null);
-        User.create.mockResolvedValue({
+        dao.findUserByEmailDao.mockResolvedValue(null);
+        dao.createUserDao.mockResolvedValue({
             _id: '1',
             name: 'A',
             email: 'a@mail.com',

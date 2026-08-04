@@ -15,6 +15,20 @@ describe('App base routes', () => {
         expect(response.body).toEqual({ message: 'API Ecommerce funcionando' });
     });
 
+    test('GET /health responde que la aplicación está funcionando', async () => {
+        const response = await request(app).get('/health');
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toEqual({ status: 'ok', message: 'La aplicación está funcionando' });
+    });
+
+    test('GET /api/health responde que la aplicación está funcionando', async () => {
+        const response = await request(app).get('/api/health');
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toEqual({ status: 'ok', message: 'La aplicación está funcionando' });
+    });
+
     test('GET /api/docs/ permite acceso en development', async () => {
         process.env.NODE_ENV = 'development';
 

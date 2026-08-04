@@ -21,6 +21,10 @@ app.get('/', (req, res) => {
     res.status(200).json({ message: 'API Ecommerce funcionando' });
 });
 
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'La aplicación está funcionando' });
+});
+
 app.use('/api/docs', (req, res, next) => {
     if (isProd()) {
         return res.status(403).json({ message: 'Documentacion no disponible en produccion.' });

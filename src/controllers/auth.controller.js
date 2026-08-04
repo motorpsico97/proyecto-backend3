@@ -1,5 +1,10 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const {
+    createUserDao,
+    findUserByEmailDao,
+    findUserByEmailWithPasswordDao,
+    getUserByIdDao,
+} = require('../dao');
 
 const generateToken = (id) =>
     jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -21,12 +26,12 @@ const register = async (req, res, next) => {
             return res.status(400).json({ message: 'name, email y password son obligatorios.' });
         }
 
-        const exists = await User.findOne({ email });
+        const exists = await findUserByEmailDao(email);
         if (exists) {
             return res.status(400).json({ message: 'El email ya esta registrado.' });
         }
 
-        const user = await User.create({
+        const user = await createUserDao({
             name,
             email,
             password,
@@ -59,7 +64,7 @@ const login = async (req, res, next) => {
             return res.status(400).json({ message: 'email y password son obligatorios.' });
         }
 
-        const user = await User.findOne({ email }).select('+password');
+        const user = await findUserByEmailWithPasswordDao(email);
         if (!user) {
             return res.status(401).json({ message: 'Credenciales invalidas.' });
         }
@@ -89,7 +94,7 @@ const login = async (req, res, next) => {
 
 const me = async (req, res, next) => {
     try {
-        const user = await User.findById(req.user._id).select('-password');
+        const user = await getUserByIdDao(req.user._id);
         return res.status(200).json(user);
     } catch (error) {
         return next(error);
