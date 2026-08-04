@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const request = require('supertest');
-const app = require('../src/app');
-const Product = require('../src/models/Product');
+const app = require('../src/app.js');
+const Product = require('../src/models/Product.js');
 
 const uniqueEmail = () => `user_${Date.now()}_${Math.floor(Math.random() * 10000)}@mail.com`;
 

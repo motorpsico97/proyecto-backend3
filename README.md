@@ -1,69 +1,139 @@
-# Proyecto Nuevo - Ecommerce API
+﻿# Proyecto Nuevo - Ecommerce API
 
-API REST para la gestión de usuarios, autenticación y productos, construida con Node.js, Express y MongoDB.
+API REST para autenticacion, usuarios y productos, construida con Node.js, Express y MongoDB.
 
-## Stack principal
+## Tabla de contenido
 
-- Node.js + Express
+1. [Resumen](#resumen)
+2. [Arquitectura y flujo](#arquitectura-y-flujo)
+3. [Stack tecnologico](#stack-tecnologico)
+4. [Estructura del proyecto](#estructura-del-proyecto)
+5. [Requisitos](#requisitos)
+6. [Variables de entorno](#variables-de-entorno)
+7. [Instalacion y ejecucion](#instalacion-y-ejecucion)
+8. [Scripts disponibles](#scripts-disponibles)
+9. [Autenticacion y autorizacion](#autenticacion-y-autorizacion)
+10. [Documentacion Swagger](#documentacion-swagger)
+11. [Formato de respuestas](#formato-de-respuestas)
+12. [Endpoints](#endpoints)
+13. [Ejemplos fake y reales](#ejemplos-fake-y-reales)
+14. [Pruebas automatizadas](#pruebas-automatizadas)
+15. [Docker](#docker)
+16. [Errores comunes y troubleshooting](#errores-comunes-y-troubleshooting)
+17. [Notas de seguridad y produccion](#notas-de-seguridad-y-produccion)
+
+## Resumen
+
+La aplicacion expone endpoints para:
+
+- Registro y login de usuarios con JWT.
+- Perfil del usuario autenticado.
+- CRUD de usuarios (solo administradores).
+- CRUD de productos (lectura publica, escritura solo administradores).
+- Health checks para monitoreo.
+- Documentacion Swagger en entorno no productivo.
+
+## Arquitectura y flujo
+
+La API sigue una separacion por capas:
+
+- Rutas: definen endpoints HTTP y middlewares.
+- Controladores: orquestan validaciones y respuestas.
+- DAO: capa de acceso a datos con Mongoose.
+- Modelos: definicion de esquemas MongoDB.
+- Middlewares: autenticacion, autorizacion y manejo de errores.
+- Utils: helpers como hashing y formateo de respuesta.
+
+Flujo simplificado de una request:
+
+```text
+Cliente -> Route -> Middleware(s) -> Controller -> DAO -> MongoDB
+                                       |
+                                       -> Response JSON
+```
+
+## Stack tecnologico
+
+- Node.js (CommonJS)
+- Express 5
 - MongoDB + Mongoose
-- JWT en cookie httpOnly y Bearer token
-- Swagger para documentación de endpoints
-- Jest + Supertest para pruebas unitarias e integradas
-
-## Características
-
-- Registro, login, perfil y logout
-- Autorización por roles (user/admin)
-- CRUD de usuarios (solo admin)
-- CRUD de productos (lectura pública, escritura admin)
-- Middleware de errores centralizado
-- Health check para verificar que la API responde
-- Capa DAO para separar acceso a datos de la lógica de controladores
-- Utilidad de hashing para contraseñas
-- Tests con mocks y fakes para aislar dependencias externas
+- JWT (jsonwebtoken)
+- Cookies (cookie-parser)
+- Swagger (swagger-jsdoc + swagger-ui-express)
+- Testing (Jest + Supertest + mongodb-memory-server)
 
 ## Estructura del proyecto
 
 ```text
-src/
-├── app.js                 # Configuración de Express, middlewares y rutas base
-├── server.js              # Arranque del servidor y carga de variables de entorno
-├── config/
-│   └── db.js              # Conexión a MongoDB
-├── controllers/           # Lógica de negocio por recurso
-├── dao/                   # Capa de acceso a datos (DAO)
-├── docs/                  # Configuración Swagger
-├── middlewares/           # Auth y manejo de errores
-├── models/                # Esquemas Mongoose
-├── routes/                # Rutas agrupadas por recurso
-├── utils/                 # Utilidades compartidas (hashing, etc.)
-└── .env                   # Variables de entorno locales
-
-tests/
-├── app.test.js
-├── auth.controller.unit.test.js
-├── auth.test.js
-├── dao.test.js
-├── middlewares.test.js
-├── product.controller.test.js
-├── product.dao.test.js
-├── products.test.js
-├── user.controller.test.js
-├── user.dao.test.js
-├── users.test.js
-└── setup/
+.
+├── Dockerfile
+├── jest.config.js
+├── package.json
+├── README.md
+├── src/
+│   ├── app.js
+│   ├── server.js
+│   ├── config/
+│   │   └── db.js
+│   ├── controllers/
+│   │   ├── auth.controller.js
+│   │   ├── product.controller.js
+│   │   └── user.controller.js
+│   ├── dao/
+│   │   ├── index.js
+│   │   ├── product.dao.js
+│   │   └── user.dao.js
+│   ├── docs/
+│   │   └── swagger.js
+│   ├── middlewares/
+│   │   ├── auth.middleware.js
+│   │   └── error.middleware.js
+│   ├── models/
+│   │   ├── Product.js
+│   │   └── User.js
+│   ├── routes/
+│   │   ├── adoption.router.js
+│   │   ├── auth.routes.js
+│   │   ├── index.js
+│   │   ├── product.routes.js
+│   │   └── user.routes.js
+│   └── utils/
+│       ├── hash.js
+│       └── response.js
+└── tests/
+    ├── adoption.router.test.js
+    ├── app.test.js
+    ├── auth.controller.unit.test.js
+    ├── auth.test.js
+    ├── dao.test.js
+    ├── middlewares.test.js
+    ├── product.controller.test.js
+    ├── product.dao.test.js
+    ├── products.test.js
+    ├── response.util.test.js
+    ├── user.controller.test.js
+    ├── user.dao.test.js
+    ├── users.test.js
+    └── setup/
+        └── db.setup.js
 ```
 
 ## Requisitos
 
 - Node.js 20 o superior (recomendado 22)
-- npm
-- MongoDB (local o remoto)
+- npm 9+
+- MongoDB local o remoto
 - Docker (opcional)
 
 ## Variables de entorno
 
-Crea un archivo llamado .env dentro de la carpeta src con este contenido:
+La app carga variables con este orden de prioridad:
+
+1. `.env.local` en la raiz del proyecto
+2. `.env` en la raiz del proyecto
+3. `src/.env` (compatibilidad)
+
+Archivo recomendado en raiz: `.env`
 
 ```env
 PORT=8080
@@ -73,15 +143,35 @@ JWT_SECRET=supersecretkey123
 JWT_EXPIRES_IN=1d
 ```
 
-### Descripción rápida
+### Ejemplo fake (para documentacion o demos)
 
-- PORT: puerto HTTP de la API
-- NODE_ENV: development, test o production
-- MONGO_URI: cadena de conexión de MongoDB
-- JWT_SECRET: clave para firmar tokens
-- JWT_EXPIRES_IN: tiempo de expiración del JWT
+```env
+PORT=8080
+NODE_ENV=development
+MONGO_URI=mongodb://localhost:27017/ecommerce_demo
+JWT_SECRET=fake_secret_for_docs_only
+JWT_EXPIRES_IN=1d
+```
 
-## Instalación y ejecución local
+### Ejemplo realista (entorno cloud, sin secretos reales)
+
+```env
+PORT=8080
+NODE_ENV=production
+MONGO_URI=mongodb+srv://<usuario>:<password>@<cluster>.mongodb.net/ecommerce?retryWrites=true&w=majority
+JWT_SECRET=<secreto_largo_aleatorio>
+JWT_EXPIRES_IN=1d
+```
+
+Descripcion rapida:
+
+- PORT: puerto HTTP donde escucha Express.
+- NODE_ENV: `development`, `test` o `production`.
+- MONGO_URI: cadena de conexion para Mongoose.
+- JWT_SECRET: secreto de firmado de tokens.
+- JWT_EXPIRES_IN: expiracion del JWT (ejemplo: `1d`, `12h`).
+
+## Instalacion y ejecucion
 
 1. Instalar dependencias:
 
@@ -89,64 +179,80 @@ JWT_EXPIRES_IN=1d
 npm install
 ```
 
-2. Crear el archivo .env en src/ con las variables anteriores.
+2. Crear archivo `.env` en la raiz del proyecto.
 
-3. Levantar en desarrollo:
+3. Iniciar en desarrollo (nodemon):
 
 ```bash
 npm run dev
 ```
 
-4. Levantar en modo normal:
+4. Iniciar modo normal:
 
 ```bash
 npm start
 ```
 
-### URLs útiles
+URLs utiles:
 
+- API root: http://localhost:8080/
+- Health global: http://localhost:8080/health
 - API base: http://localhost:8080/api
-- Health check: http://localhost:8080/health
-- Health check API: http://localhost:8080/api/health
+- Health API: http://localhost:8080/api/health
 - Swagger: http://localhost:8080/api/docs
 
-## Autenticación y autorización
+## Scripts disponibles
 
-La API acepta tokens de dos formas:
+```bash
+npm run dev            # nodemon src/server.js
+npm start              # node src/server.js
+npm test               # jest --runInBand
+npm run test:coverage  # jest --runInBand --coverage
+```
 
-- Cookie httpOnly llamada token
-- Header Authorization: Bearer <token>
+## Autenticacion y autorizacion
+
+La API acepta token de 2 formas:
+
+- Cookie httpOnly `token`
+- Header `Authorization: Bearer <token>`
 
 Roles:
 
-- user: acceso a rutas autenticadas de perfil
-- admin: acceso a CRUD de usuarios y escritura de productos
+- `user`: acceso a rutas autenticadas basicas.
+- `admin`: acceso a CRUD de usuarios y escritura de productos.
 
-## Formato estándar de respuestas
+Middlewares:
 
-Todas las respuestas exitosas y de error de la API siguen un formato consistente mediante la utilidad de estandarización de respuestas.
+- `protect`: valida JWT y carga `req.user`.
+- `authorize('admin')`: limita acceso por rol.
 
-### Estructura general
+## Documentacion Swagger
+
+- Disponible en `/api/docs`.
+- En `production` retorna 403 con mensaje:
 
 ```json
-{
-  "message": "Descripción breve del resultado",
-  "data": {
-    "...": "contenido principal"
-  }
-}
+{ "message": "Documentacion no disponible en produccion." }
 ```
 
-### Ejemplos
+Importante:
 
-Respuesta exitosa de creación de usuario:
+- `#/components/schemas/...` no es una carpeta fisica.
+- Es una seccion interna de OpenAPI definida en `src/docs/swagger.js`.
+
+## Formato de respuestas
+
+La API tiene dos estilos de respuesta porque conviven controladores con y sin helper `sendResponse`:
+
+1. Estilo estandarizado (principalmente usuarios):
 
 ```json
 {
   "message": "Usuario creado.",
   "data": {
     "user": {
-      "id": "64f1c2d3e4f5a6b7c8d9e0f1",
+      "id": "66af00000000000000000001",
       "name": "Admin",
       "email": "admin@mail.com",
       "role": "admin"
@@ -155,285 +261,372 @@ Respuesta exitosa de creación de usuario:
 }
 ```
 
-Respuesta de error:
+2. Estilo directo (algunos endpoints de auth y products):
 
 ```json
 {
-  "message": "Usuario no encontrado."
+  "message": "Login exitoso.",
+  "token": "<jwt>",
+  "user": {
+    "id": "66af00000000000000000001",
+    "name": "Admin",
+    "email": "admin@mail.com",
+    "role": "admin"
+  }
 }
 ```
-
-Este esquema permite que los clientes consuman la API de forma uniforme, sin importar el recurso consultado.
 
 ## Endpoints
 
-Base URL: /api
+Base: `/api`
 
-### Auth
+### Publicos
 
-- POST /auth/register
-- POST /auth/login
-- GET /auth/me
-- POST /auth/logout
+- `GET /health`
+- `GET /products`
+- `GET /products/:id`
+- `POST /auth/register`
+- `POST /auth/login`
 
-### Users (admin)
+### Requieren autenticacion
 
-- POST /users
-- GET /users
-- GET /users/:id
-- PUT /users/:id
-- DELETE /users/:id
+- `GET /auth/me`
+- `POST /auth/logout`
 
-### Products
+### Requieren rol admin
 
-- GET /products
-- GET /products/:id
-- POST /products (admin)
-- PUT /products/:id (admin)
-- DELETE /products/:id (admin)
+- `POST /users`
+- `GET /users`
+- `GET /users/:id`
+- `PUT /users/:id`
+- `DELETE /users/:id`
+- `POST /products`
+- `PUT /products/:id`
+- `DELETE /products/:id`
 
-## Ejemplos de uso en Postman
+## Ejemplos fake y reales
 
-Configura un Environment con:
+### 1) Health check (real)
 
-- baseUrl: http://localhost:8080/api
-- token: vacío al inicio
-
-### 1) Registrar usuario
-
-```http
-POST {{baseUrl}}/auth/register
-Content-Type: application/json
+```bash
+curl -i http://localhost:8080/health
 ```
+
+Respuesta esperada:
 
 ```json
 {
-  "name": "Admin",
-  "email": "admin@mail.com",
-  "password": "123456",
-  "role": "admin"
+  "status": "ok",
+  "message": "La aplicación está funcionando"
 }
 ```
 
-### 2) Login
+### 2) Registro de usuario (fake)
 
-```http
-POST {{baseUrl}}/auth/login
-Content-Type: application/json
+Request:
+
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name":"Ada Lovelace",
+    "email":"ada@example.com",
+    "password":"123456",
+    "role":"admin"
+  }'
 ```
+
+Response esperada (realista):
 
 ```json
 {
-  "email": "admin@mail.com",
-  "password": "123456"
+  "message": "Usuario creado correctamente.",
+  "token": "<jwt>",
+  "user": {
+    "id": "66af00000000000000000001",
+    "name": "Ada Lovelace",
+    "email": "ada@example.com",
+    "role": "admin"
+  }
 }
 ```
 
-Guarda el token recibido en la variable token del Environment.
+### 3) Login (real)
 
-### 3) Obtener perfil
+Request:
 
-```http
-GET {{baseUrl}}/auth/me
-Authorization: Bearer {{token}}
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email":"ada@example.com",
+    "password":"123456"
+  }'
 ```
 
-### 4) Logout
-
-```http
-POST {{baseUrl}}/auth/logout
-Authorization: Bearer {{token}}
-```
-
-### 5) Crear un usuario (solo admin)
-
-```http
-POST {{baseUrl}}/users
-Authorization: Bearer {{token}}
-Content-Type: application/json
-```
+Response esperada:
 
 ```json
 {
-  "name": "Usuario Nuevo",
-  "email": "usuario@mail.com",
-  "password": "123456",
-  "role": "user"
+  "message": "Login exitoso.",
+  "token": "<jwt>",
+  "user": {
+    "id": "66af00000000000000000001",
+    "name": "Ada Lovelace",
+    "email": "ada@example.com",
+    "role": "admin"
+  }
 }
 ```
 
-### 6) Listar usuarios (solo admin)
+### 4) Obtener perfil autenticado (real)
 
-```http
-GET {{baseUrl}}/users
-Authorization: Bearer {{token}}
+```bash
+curl http://localhost:8080/api/auth/me \
+  -H "Authorization: Bearer <jwt>"
 ```
 
-### 7) Obtener un usuario por ID (solo admin)
-
-```http
-GET {{baseUrl}}/users/507f191e810c19729de860ea
-Authorization: Bearer {{token}}
-```
-
-### 8) Actualizar un usuario (solo admin)
-
-```http
-PUT {{baseUrl}}/users/507f191e810c19729de860ea
-Authorization: Bearer {{token}}
-Content-Type: application/json
-```
+Respuesta esperada:
 
 ```json
 {
-  "name": "Usuario Actualizado",
-  "role": "admin"
+  "_id": "66af00000000000000000001",
+  "name": "Ada Lovelace",
+  "email": "ada@example.com",
+  "role": "admin",
+  "createdAt": "2026-08-04T12:00:00.000Z",
+  "updatedAt": "2026-08-04T12:00:00.000Z",
+  "__v": 0
 }
 ```
 
-### 9) Eliminar un usuario (solo admin)
+### 5) Crear usuario desde panel admin (fake)
 
-```http
-DELETE {{baseUrl}}/users/507f191e810c19729de860ea
-Authorization: Bearer {{token}}
+```bash
+curl -X POST http://localhost:8080/api/users \
+  -H "Authorization: Bearer <jwt_admin>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name":"Grace Hopper",
+    "email":"grace@example.com",
+    "password":"123456",
+    "role":"user"
+  }'
 ```
 
-### 10) Crear un producto (solo admin)
-
-```http
-POST {{baseUrl}}/products
-Authorization: Bearer {{token}}
-Content-Type: application/json
-```
+Respuesta esperada:
 
 ```json
 {
-  "title": "Teclado mecánico",
-  "price": 45000,
-  "stock": 15
+  "message": "Usuario creado.",
+  "data": {
+    "user": {
+      "id": "66af00000000000000000002",
+      "name": "Grace Hopper",
+      "email": "grace@example.com",
+      "role": "user"
+    }
+  }
 }
 ```
 
-### 11) Listar productos (público)
+### 6) Listar usuarios (real)
 
-```http
-GET {{baseUrl}}/products
+```bash
+curl http://localhost:8080/api/users \
+  -H "Authorization: Bearer <jwt_admin>"
 ```
 
-### 12) Obtener un producto por ID
-
-```http
-GET {{baseUrl}}/products/507f191e810c19729de860ea
-```
-
-### 13) Actualizar un producto (solo admin)
-
-```http
-PUT {{baseUrl}}/products/507f191e810c19729de860ea
-Authorization: Bearer {{token}}
-Content-Type: application/json
-```
+Ejemplo de respuesta:
 
 ```json
 {
-  "title": "Teclado mecánico RGB",
-  "price": 52000,
-  "stock": 10
+  "message": "Usuarios obtenidos.",
+  "data": [
+    {
+      "_id": "66af00000000000000000001",
+      "name": "Ada Lovelace",
+      "email": "ada@example.com",
+      "role": "admin"
+    },
+    {
+      "_id": "66af00000000000000000002",
+      "name": "Grace Hopper",
+      "email": "grace@example.com",
+      "role": "user"
+    }
+  ]
 }
 ```
 
-### 14) Eliminar un producto (solo admin)
+### 7) Crear producto (fake)
 
-```http
-DELETE {{baseUrl}}/products/507f191e810c19729de860ea
-Authorization: Bearer {{token}}
+```bash
+curl -X POST http://localhost:8080/api/products \
+  -H "Authorization: Bearer <jwt_admin>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title":"Teclado mecanico",
+    "price": 45000,
+    "stock": 10
+  }'
 ```
 
-## Pruebas
+Respuesta esperada:
 
-Ejecutar la suite completa:
+```json
+{
+  "message": "Producto creado.",
+  "product": {
+    "_id": "66af00000000000000001000",
+    "title": "Teclado mecanico",
+    "price": 45000,
+    "stock": 10,
+    "createdAt": "2026-08-04T12:00:00.000Z",
+    "updatedAt": "2026-08-04T12:00:00.000Z",
+    "__v": 0
+  }
+}
+```
+
+### 8) Listar productos (real)
+
+```bash
+curl http://localhost:8080/api/products
+```
+
+Respuesta esperada:
+
+```json
+{
+  "payload": "Lista de productos",
+  "products": [
+    {
+      "_id": "66af00000000000000001000",
+      "title": "Teclado mecanico",
+      "price": 45000,
+      "stock": 10
+    }
+  ]
+}
+```
+
+### 9) Ejemplos de errores reales
+
+Sin token:
+
+```json
+{ "message": "No autorizado. Token requerido." }
+```
+
+Token invalido o expirado:
+
+```json
+{ "message": "Token invalido o expirado." }
+```
+
+Sin permisos:
+
+```json
+{ "message": "No tienes permisos para esta accion." }
+```
+
+Recurso no encontrado:
+
+```json
+{ "message": "Usuario no encontrado." }
+```
+
+## Pruebas automatizadas
+
+Suite completa:
 
 ```bash
 npm test
 ```
 
-Ejecutar un archivo de pruebas específico:
-
-```bash
-npx jest tests/auth.test.js
-```
-
-Ejecutar varios archivos específicos:
-
-```bash
-npx jest tests/user.controller.test.js tests/product.controller.test.js
-```
-
-Ejecutar un archivo en modo detallado y sin watch:
-
-```bash
-npx jest tests/app.test.js --runInBand
-```
-
-Generar cobertura:
+Con cobertura:
 
 ```bash
 npm run test:coverage
 ```
 
+Archivo puntual:
+
+```bash
+npx jest tests/adoption.router.test.js
+```
+
+La suite incluye pruebas de:
+
+- app base
+- autenticacion
+- middlewares
+- controladores
+- capa DAO
+- utilidades de respuesta
+- enrutado principal
+
 ## Docker
 
-El proyecto incluye un Dockerfile listo para construir una imagen de la API.
+El proyecto incluye `Dockerfile` para construir y ejecutar la API.
 
-### 1) Construir la imagen
+### Construir imagen
 
 ```bash
 docker build -t proyecto-nuevo:1.0.0 .
 ```
 
-### 2) Ejecutar el contenedor
+### Ejecutar contenedor
+
+Nota: el contenedor usa puerto interno 3000, por eso se fuerza `PORT=3000`.
 
 ```bash
-docker run --name proyecto-nuevo-api --env-file src/.env -e PORT=3000 -p 3000:3000 proyecto-nuevo:1.0.0
+docker run --name proyecto-nuevo-api --env-file .env -e PORT=3000 -p 3000:3000 proyecto-nuevo:1.0.0
 ```
 
-### 3) Verificar que el contenedor está corriendo
+### Comandos utiles Docker
 
 ```bash
 docker ps
-```
-
-### 4) Ver logs del contenedor
-
-```bash
 docker logs -f proyecto-nuevo-api
-```
-
-### 5) Detener y eliminar el contenedor
-
-```bash
 docker stop proyecto-nuevo-api
 docker rm proyecto-nuevo-api
 ```
 
-### 6) Usar un puerto distinto
+## Errores comunes y troubleshooting
 
-```bash
-docker run --name proyecto-nuevo-api --env-file src/.env -e PORT=8080 -p 8080:8080 proyecto-nuevo:1.0.0
+### Error: MONGO_URI undefined en mongoose.connect
+
+Mensaje tipico:
+
+```text
+The `uri` parameter to `openUri()` must be a string, got "undefined"
 ```
 
-### 7) Acceder a la API desde el host
+Checklist:
 
-Una vez levantado el contenedor, la API quedará disponible en:
+1. Verifica que exista `.env` en la raiz.
+2. Verifica que `MONGO_URI` este definida.
+3. Reinicia nodemon luego de editar env.
+4. Si usas varios env, recuerda prioridad: `.env.local` > `.env` > `src/.env`.
 
-- http://localhost:3000/api
-- http://localhost:3000/health
-- http://localhost:3000/api/docs
+### Error 403 en /api/docs
 
-## Errores comunes
+En `production`, Swagger esta bloqueado por diseno.
 
-- Error de conexión a MongoDB: revisa MONGO_URI y que la instancia esté disponible.
-- 401 No autorizado: falta token en cookie o Bearer, o el token expiró.
-- 403 No tienes permisos: el usuario autenticado no tiene rol admin.
-- Error al hacer docker push: verifica docker login, nombre del repo y permisos en Docker Hub.
+### Error 400 ID invalido
 
+Se produce cuando Mongoose detecta `CastError` o IDs incorrectos.
+
+## Notas de seguridad y produccion
+
+- Usa un `JWT_SECRET` robusto y unico por entorno.
+- No commitees archivos `.env` con secretos.
+- Limita CORS y origenes en despliegues reales.
+- En produccion, evita exponer stack traces.
+- Rota credenciales y tokens periodicamente.
+
+---
+
+Si quieres, en un siguiente paso puedo agregar una coleccion de Postman lista para importar con todos estos ejemplos y variables de entorno preconfiguradas.

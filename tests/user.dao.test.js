@@ -1,4 +1,4 @@
-const User = require('../src/models/User');
+const User = require('../src/models/User.js');
 const {
     createUserDao,
     deleteUserDao,
@@ -8,9 +8,9 @@ const {
     getUserByIdDao,
     getUserByIdWithPasswordDao,
     findUserByIdDao,
-} = require('../src/dao/user.dao');
+} = require('../src/dao/user.dao.js');
 
-jest.mock('../src/models/User');
+jest.mock('../src/models/User.js');
 
 describe('user.dao', () => {
     beforeEach(() => {

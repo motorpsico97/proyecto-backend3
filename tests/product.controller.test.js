@@ -1,4 +1,4 @@
-const { createProduct, getProducts, getProductById, updateProduct, deleteProduct } = require('../src/controllers/product.controller');
+const { createProduct, getProducts, getProductById, updateProduct, deleteProduct } = require('../src/controllers/product.controller.js');
 const dao = require('../src/dao');
 
 jest.mock('../src/dao');

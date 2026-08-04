@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>53/53</span>
+                <span class='fraction'>54/54</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>49/49</span>
+                <span class='fraction'>50/50</span>
             </div>
         
             
@@ -187,7 +187,12 @@
 <a name='L122'></a><a href='#L122'>122</a>
 <a name='L123'></a><a href='#L123'>123</a>
 <a name='L124'></a><a href='#L124'>124</a>
-<a name='L125'></a><a href='#L125'>125</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">5x</span>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -195,6 +200,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
@@ -227,26 +233,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -271,6 +279,8 @@
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -320,18 +330,19 @@ const {
     getUserByIdWithPasswordDao,
     findUserByIdDao,
 } = require('../dao');
+const { sendResponse } = require('../utils/response');
 &nbsp;
 const createUser = async (req, res, next) =&gt; {
     try {
         const { name, email, password, role } = req.body;
 &nbsp;
         if (!name || !email || !password) {
-            return res.status(400).json({ message: 'name, email y password son obligatorios.' });
+            return sendResponse(res, 400, { message: 'name, email y password son obligatorios.' });
         }
 &nbsp;
         const exists = await findUserByEmailDao(email);
         if (exists) {
-            return res.status(400).json({ message: 'El email ya esta registrado.' });
+            return sendResponse(res, 400, { message: 'El email ya esta registrado.' });
         }
 &nbsp;
         const user = await createUserDao({
@@ -341,13 +352,15 @@ const createUser = async (req, res, next) =&gt; {
             role: role &amp;&amp; role === 'admin' ? 'admin' : 'user',
         });
 &nbsp;
-        return res.status(201).json({
+        return sendResponse(res, 201, {
             message: 'Usuario creado.',
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
+            data: {
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                },
             },
         });
     } catch (error) {
@@ -358,7 +371,7 @@ const createUser = async (req, res, next) =&gt; {
 const getUsers = async (req, res, next) =&gt; {
     try {
         const users = await getUsersDao();
-        return res.status(200).json(users);
+        return sendResponse(res, 200, { message: 'Usuarios obtenidos.', data: users });
     } catch (error) {
         return next(error);
     }
@@ -369,10 +382,10 @@ const getUserById = async (req, res, next) =&gt; {
         const user = await getUserByIdDao(req.params.id);
 &nbsp;
         if (!user) {
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
+            return sendResponse(res, 404, { message: 'Usuario no encontrado.' });
         }
 &nbsp;
-        return res.status(200).json(user);
+        return sendResponse(res, 200, { message: 'Usuario obtenido.', data: user });
     } catch (error) {
         return next(error);
     }
@@ -384,7 +397,7 @@ const updateUser = async (req, res, next) =&gt; {
 &nbsp;
         const user = await getUserByIdWithPasswordDao(req.params.id);
         if (!user) {
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
+            return sendResponse(res, 404, { message: 'Usuario no encontrado.' });
         }
 &nbsp;
         if (name !== undefined) user.name = name;
@@ -394,13 +407,15 @@ const updateUser = async (req, res, next) =&gt; {
 &nbsp;
         await user.save();
 &nbsp;
-        return res.status(200).json({
+        return sendResponse(res, 200, {
             message: 'Usuario actualizado.',
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
+            data: {
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                },
             },
         });
     } catch (error) {
@@ -411,18 +426,18 @@ const updateUser = async (req, res, next) =&gt; {
 const deleteUser = async (req, res, next) =&gt; {
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
+            return sendResponse(res, 404, { message: 'Usuario no encontrado.' });
         }
 &nbsp;
         const user = await findUserByIdDao(req.params.id);
 &nbsp;
         if (!user) {
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
+            return sendResponse(res, 404, { message: 'Usuario no encontrado.' });
         }
 &nbsp;
         await user.deleteOne();
 &nbsp;
-        return res.status(200).json({ message: 'Usuario eliminado.' });
+        return sendResponse(res, 200, { message: 'Usuario eliminado.' });
     } catch (error) {
         return next(error);
     }
@@ -442,7 +457,7 @@ module.exports = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-08-04T03:51:53.170Z
+                at 2026-08-04T17:39:20.878Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

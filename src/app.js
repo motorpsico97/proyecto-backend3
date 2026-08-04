@@ -3,7 +3,7 @@ const cookieParser = require('cookie-parser');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./docs/swagger');
 const apiRoutes = require('./routes');
-const { notFound, errorHandler } = require('./middlewares/error.middleware');
+const { notFound, errorHandler } = require('./middlewares/error.middleware.js');
 
 
 const isProd = () => process.env.NODE_ENV === 'production';

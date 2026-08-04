@@ -7,7 +7,7 @@ const {
     getUserByIdWithPasswordDao,
     findUserByIdDao,
 } = require('../dao');
-const { sendResponse } = require('../utils/response');
+const { sendResponse } = require('../utils/response.js');
 
 const createUser = async (req, res, next) => {
     try {

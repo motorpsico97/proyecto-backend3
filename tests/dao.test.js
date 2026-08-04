@@ -1,9 +1,9 @@
-const User = require('../src/models/User');
-const Product = require('../src/models/Product');
+const User = require('../src/models/User.js');
+const Product = require('../src/models/Product.js');
 const { createUserDao, getUsersDao, createProductDao, getProductsDao } = require('../src/dao');
 
-jest.mock('../src/models/User');
-jest.mock('../src/models/Product');
+jest.mock('../src/models/User.js');
+jest.mock('../src/models/Product.js');
 
 describe('dao layer', () => {
     beforeEach(() => {

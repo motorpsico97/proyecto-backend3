@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { hashPassword, comparePassword } = require('../utils/hash');
+const { hashPassword, comparePassword } = require('../utils/hash.js');
 
 const userSchema = new mongoose.Schema(
     {

@@ -1,10 +1,10 @@
 const jwt = require('jsonwebtoken');
-const User = require('../src/models/User');
-const { protect, authorize } = require('../src/middlewares/auth.middleware');
-const { notFound, errorHandler } = require('../src/middlewares/error.middleware');
+const User = require('../src/models/User.js');
+const { protect, authorize } = require('../src/middlewares/auth.middleware.js');
+const { notFound, errorHandler } = require('../src/middlewares/error.middleware.js');
 
 jest.mock('jsonwebtoken');
-jest.mock('../src/models/User');
+jest.mock('../src/models/User.js');
 
 const createRes = () => {
     const res = {};

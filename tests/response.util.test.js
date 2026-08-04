@@ -1,4 +1,4 @@
-const { buildResponse, sendResponse } = require('../src/utils/response');
+const { buildResponse, sendResponse } = require('../src/utils/response.js');
 
 describe('response utility', () => {
     test('buildResponse devuelve una estructura consistente con mensaje y datos', () => {

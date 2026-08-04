@@ -1,13 +1,13 @@
-const Product = require('../src/models/Product');
+const Product = require('../src/models/Product.js');
 const {
     createProductDao,
     getProductsDao,
     getProductByIdDao,
     updateProductDao,
     deleteProductDao,
-} = require('../src/dao/product.dao');
+} = require('../src/dao/product.dao.js');
 
-jest.mock('../src/models/Product');
+jest.mock('../src/models/Product.js');
 
 describe('product.dao', () => {
     beforeEach(() => {

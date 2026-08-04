@@ -5,8 +5,8 @@ const {
     getProductById,
     updateProduct,
     deleteProduct,
-} = require('../controllers/product.controller');
-const { protect, authorize } = require('../middlewares/auth.middleware');
+} = require('../controllers/product.controller.js');
+const { protect, authorize } = require('../middlewares/auth.middleware.js');
 
 const router = express.Router();
 

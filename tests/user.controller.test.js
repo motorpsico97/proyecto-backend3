@@ -5,7 +5,7 @@ const {
     getUserById,
     updateUser,
     deleteUser,
-} = require('../src/controllers/user.controller');
+} = require('../src/controllers/user.controller.js');
 const dao = require('../src/dao');
 
 jest.mock('../src/dao');

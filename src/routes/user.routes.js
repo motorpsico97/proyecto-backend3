@@ -5,8 +5,8 @@ const {
     getUserById,
     updateUser,
     deleteUser,
-} = require('../controllers/user.controller');
-const { protect, authorize } = require('../middlewares/auth.middleware');
+} = require('../controllers/user.controller.js');
+const { protect, authorize } = require('../middlewares/auth.middleware.js');
 
 const router = express.Router();
 

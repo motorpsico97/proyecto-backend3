@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { register, login, me } = require('../src/controllers/auth.controller');
+const { register, login, me } = require('../src/controllers/auth.controller.js');
 const dao = require('../src/dao');
 
 jest.mock('../src/dao');
