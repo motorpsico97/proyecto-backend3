@@ -50,6 +50,22 @@ const options = {
             stock: { type: 'number', example: 15 },
           },
         },
+        StandardResponse: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', example: 'Operación completada.' },
+            data: {
+              type: 'object',
+              description: 'Contenido principal de la respuesta.',
+            },
+          },
+        },
+        ErrorResponse: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', example: 'Usuario no encontrado.' },
+          },
+        },
       },
     },
   },

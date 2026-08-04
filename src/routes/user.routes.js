@@ -27,10 +27,24 @@ const router = express.Router();
  *     responses:
  *       201:
  *         description: Usuario creado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StandardResponse'
+ *             example:
+ *               message: Usuario creado.
+ *               data:
+ *                 user:
+ *                   id: 64f1c2d3e4f5a6b7c8d9e0f1
+ *                   name: Usuario Nuevo
+ *                   email: usuario@mail.com
+ *                   role: user
  *       400:
  *         description: Datos invalidos o email ya registrado.
  *         content:
  *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             examples:
  *               missingFields:
  *                 value:
@@ -42,12 +56,16 @@ const router = express.Router();
  *         description: No autorizado. Token requerido o invalido.
  *         content:
  *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               message: No autorizado. Token requerido.
  *       403:
  *         description: No tienes permisos para esta accion.
  *         content:
  *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               message: No tienes permisos para esta accion.
  *       500:

@@ -122,6 +122,49 @@ Roles:
 - user: acceso a rutas autenticadas de perfil
 - admin: acceso a CRUD de usuarios y escritura de productos
 
+## Formato estándar de respuestas
+
+Todas las respuestas exitosas y de error de la API siguen un formato consistente mediante la utilidad de estandarización de respuestas.
+
+### Estructura general
+
+```json
+{
+  "message": "Descripción breve del resultado",
+  "data": {
+    "...": "contenido principal"
+  }
+}
+```
+
+### Ejemplos
+
+Respuesta exitosa de creación de usuario:
+
+```json
+{
+  "message": "Usuario creado.",
+  "data": {
+    "user": {
+      "id": "64f1c2d3e4f5a6b7c8d9e0f1",
+      "name": "Admin",
+      "email": "admin@mail.com",
+      "role": "admin"
+    }
+  }
+}
+```
+
+Respuesta de error:
+
+```json
+{
+  "message": "Usuario no encontrado."
+}
+```
+
+Este esquema permite que los clientes consuman la API de forma uniforme, sin importar el recurso consultado.
+
 ## Endpoints
 
 Base URL: /api

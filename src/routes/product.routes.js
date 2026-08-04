@@ -41,22 +41,40 @@ router.get('/', getProducts);
  *     responses:
  *       201:
  *         description: Producto creado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/StandardResponse'
+ *             example:
+ *               message: Producto creado.
+ *               data:
+ *                 product:
+ *                   _id: 64f1c2d3e4f5a6b7c8d9e0f1
+ *                   title: Teclado mecánico
+ *                   price: 45000
+ *                   stock: 15
  *       400:
  *         description: Datos invalidos.
  *         content:
  *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               message: title y price son obligatorios.
  *       401:
  *         description: No autorizado. Token requerido o invalido.
  *         content:
  *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               message: No autorizado. Token requerido.
  *       403:
  *         description: No tienes permisos para esta accion.
  *         content:
  *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  *             example:
  *               message: No tienes permisos para esta accion.
  *       500:

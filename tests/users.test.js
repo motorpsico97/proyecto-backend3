@@ -31,7 +31,7 @@ describe('User endpoints', () => {
             });
 
         expect(response.statusCode).toBe(201);
-        expect(response.body.user).toBeDefined();
+        expect(response.body.data.user).toBeDefined();
     });
 
     test('POST /api/users devuelve 401 sin token', async () => {
@@ -69,7 +69,7 @@ describe('User endpoints', () => {
             .set('Authorization', `Bearer ${adminToken}`);
 
         expect(response.statusCode).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
+        expect(Array.isArray(response.body.data)).toBe(true);
     });
 
     test('GET /api/users/:id obtiene usuario existente', async () => {
@@ -86,7 +86,7 @@ describe('User endpoints', () => {
             .set('Authorization', `Bearer ${adminToken}`);
 
         expect(response.statusCode).toBe(200);
-        expect(response.body.email).toBe(user.email);
+        expect(response.body.data.email).toBe(user.email);
     });
 
     test('GET /api/users/:id devuelve 404 si no existe', async () => {
@@ -116,7 +116,7 @@ describe('User endpoints', () => {
             .send({ name: 'After Update' });
 
         expect(response.statusCode).toBe(200);
-        expect(response.body.user.name).toBe('After Update');
+        expect(response.body.data.user.name).toBe('After Update');
     });
 
     test('PUT /api/users/:id devuelve 404 si no existe', async () => {

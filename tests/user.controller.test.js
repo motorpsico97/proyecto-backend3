@@ -123,7 +123,10 @@ describe('user.controller unit', () => {
         await getUsers(req, res, next);
 
         expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.json).toHaveBeenCalledWith(users);
+        expect(res.json).toHaveBeenCalledWith({
+            message: 'Usuarios obtenidos.',
+            data: users,
+        });
     });
 
     test('getUsers llama next en error inesperado', async () => {

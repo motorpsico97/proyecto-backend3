@@ -7,18 +7,19 @@ const {
     getUserByIdWithPasswordDao,
     findUserByIdDao,
 } = require('../dao');
+const { sendResponse } = require('../utils/response');
 
 const createUser = async (req, res, next) => {
     try {
         const { name, email, password, role } = req.body;
 
         if (!name || !email || !password) {
-            return res.status(400).json({ message: 'name, email y password son obligatorios.' });
+            return sendResponse(res, 400, { message: 'name, email y password son obligatorios.' });
         }
 
         const exists = await findUserByEmailDao(email);
         if (exists) {
-            return res.status(400).json({ message: 'El email ya esta registrado.' });
+            return sendResponse(res, 400, { message: 'El email ya esta registrado.' });
         }
 
         const user = await createUserDao({
@@ -28,13 +29,15 @@ const createUser = async (req, res, next) => {
             role: role && role === 'admin' ? 'admin' : 'user',
         });
 
-        return res.status(201).json({
+        return sendResponse(res, 201, {
             message: 'Usuario creado.',
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
+            data: {
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                },
             },
         });
     } catch (error) {
@@ -45,7 +48,7 @@ const createUser = async (req, res, next) => {
 const getUsers = async (req, res, next) => {
     try {
         const users = await getUsersDao();
-        return res.status(200).json(users);
+        return sendResponse(res, 200, { message: 'Usuarios obtenidos.', data: users });
     } catch (error) {
         return next(error);
     }
@@ -56,10 +59,10 @@ const getUserById = async (req, res, next) => {
         const user = await getUserByIdDao(req.params.id);
 
         if (!user) {
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
+            return sendResponse(res, 404, { message: 'Usuario no encontrado.' });
         }
 
-        return res.status(200).json(user);
+        return sendResponse(res, 200, { message: 'Usuario obtenido.', data: user });
     } catch (error) {
         return next(error);
     }
@@ -71,7 +74,7 @@ const updateUser = async (req, res, next) => {
 
         const user = await getUserByIdWithPasswordDao(req.params.id);
         if (!user) {
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
+            return sendResponse(res, 404, { message: 'Usuario no encontrado.' });
         }
 
         if (name !== undefined) user.name = name;
@@ -81,13 +84,15 @@ const updateUser = async (req, res, next) => {
 
         await user.save();
 
-        return res.status(200).json({
+        return sendResponse(res, 200, {
             message: 'Usuario actualizado.',
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
+            data: {
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                },
             },
         });
     } catch (error) {
@@ -98,18 +103,18 @@ const updateUser = async (req, res, next) => {
 const deleteUser = async (req, res, next) => {
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
+            return sendResponse(res, 404, { message: 'Usuario no encontrado.' });
         }
 
         const user = await findUserByIdDao(req.params.id);
 
         if (!user) {
-            return res.status(404).json({ message: 'Usuario no encontrado.' });
+            return sendResponse(res, 404, { message: 'Usuario no encontrado.' });
         }
 
         await user.deleteOne();
 
-        return res.status(200).json({ message: 'Usuario eliminado.' });
+        return sendResponse(res, 200, { message: 'Usuario eliminado.' });
     } catch (error) {
         return next(error);
     }

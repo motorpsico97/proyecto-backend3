@@ -5,7 +5,6 @@ const swaggerSpec = require('./docs/swagger');
 const apiRoutes = require('./routes');
 const { notFound, errorHandler } = require('./middlewares/error.middleware');
 
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 const isProd = () => process.env.NODE_ENV === 'production';
 
