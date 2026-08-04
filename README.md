@@ -14,13 +14,14 @@ API REST para autenticacion, usuarios y productos, construida con Node.js, Expre
 8. [Scripts disponibles](#scripts-disponibles)
 9. [Autenticacion y autorizacion](#autenticacion-y-autorizacion)
 10. [Documentacion Swagger](#documentacion-swagger)
-11. [Formato de respuestas](#formato-de-respuestas)
-12. [Endpoints](#endpoints)
-13. [Ejemplos fake y reales](#ejemplos-fake-y-reales)
-14. [Pruebas automatizadas](#pruebas-automatizadas)
-15. [Docker](#docker)
-16. [Errores comunes y troubleshooting](#errores-comunes-y-troubleshooting)
-17. [Notas de seguridad y produccion](#notas-de-seguridad-y-produccion)
+11. [Logs estructurados](#logs-estructurados)
+12. [Formato de respuestas](#formato-de-respuestas)
+13. [Endpoints](#endpoints)
+14. [Ejemplos fake y reales](#ejemplos-fake-y-reales)
+15. [Pruebas automatizadas](#pruebas-automatizadas)
+16. [Docker](#docker)
+17. [Errores comunes y troubleshooting](#errores-comunes-y-troubleshooting)
+18. [Notas de seguridad y produccion](#notas-de-seguridad-y-produccion)
 
 ## Resumen
 
@@ -99,6 +100,7 @@ Cliente -> Route -> Middleware(s) -> Controller -> DAO -> MongoDB
 │   │   └── user.routes.js
 │   └── utils/
 │       ├── hash.js
+│       ├── logger.js
 │       └── response.js
 └── tests/
     ├── adoption.router.test.js
@@ -240,6 +242,61 @@ Importante:
 
 - `#/components/schemas/...` no es una carpeta fisica.
 - Es una seccion interna de OpenAPI definida en `src/docs/swagger.js`.
+
+## Logs estructurados
+
+La API incorpora un logger estructurado para registrar eventos de forma consistente y facil de filtrar en consola.
+
+### Caracteristicas
+
+- Salida en formato JSON.
+- Niveles: `info`, `warn` y `error`.
+- Incluye marca de tiempo, entorno y metadata adicional como metodo, ruta, puerto o servicio.
+- Se utiliza para:
+  - peticiones HTTP entrantes
+  - arranque del servidor
+  - errores 404/500 y fallos de inicio
+
+### Ejemplos reales de salida
+
+Cada tipo de evento queda registrado de forma individual. Por ejemplo:
+
+#### 1) Inicio del servidor
+
+```json
+{"timestamp":"2026-08-04T12:00:00.000Z","level":"info","message":"servidor listo","environment":"development","port":8080}
+```
+
+#### 2) Petición entrante
+
+```json
+{"timestamp":"2026-08-04T12:00:05.123Z","level":"info","message":"request received","category":"http","method":"GET","path":"/health","ip":"::ffff:127.0.0.1"}
+```
+
+#### 3) Petición completada
+
+```json
+{"timestamp":"2026-08-04T12:00:05.145Z","level":"info","message":"request completed","category":"http","method":"GET","path":"/health","statusCode":200,"durationMs":22}
+```
+
+#### 4) Ruta no encontrada
+
+```json
+{"timestamp":"2026-08-04T12:00:10.321Z","level":"warn","message":"ruta no encontrada","method":"GET","path":"/no-existe"}
+```
+
+#### 5) Error de la aplicación
+
+```json
+{"timestamp":"2026-08-04T12:00:15.700Z","level":"error","message":"error de solicitud","method":"GET","path":"/api/usuarios","statusCode":500,"message":"Error inesperado"}
+```
+
+### Ubicacion
+
+- Logger reutilizable: `src/utils/logger.js`
+- Integracion en la app: `src/app.js`
+- Integracion en errores: `src/middlewares/error.middleware.js`
+- Integracion en arranque: `src/server.js`
 
 ## Formato de respuestas
 

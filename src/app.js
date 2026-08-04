@@ -3,6 +3,7 @@ const cookieParser = require('cookie-parser');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./docs/swagger');
 const apiRoutes = require('./routes');
+const logger = require('./utils/logger');
 const { notFound, errorHandler } = require('./middlewares/error.middleware.js');
 
 
@@ -15,6 +16,27 @@ app.set('env', process.env.NODE_ENV);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+app.use((req, res, next) => {
+    const startedAt = Date.now();
+
+    logger.http('request received', {
+        method: req.method,
+        path: req.originalUrl,
+        ip: req.ip,
+    });
+
+    res.on('finish', () => {
+        logger.http('request completed', {
+            method: req.method,
+            path: req.originalUrl,
+            statusCode: res.statusCode,
+            durationMs: Date.now() - startedAt,
+        });
+    });
+
+    next();
+});
 
 app.get('/', (req, res) => {
     res.status(200).json({ message: 'API Ecommerce funcionando' });

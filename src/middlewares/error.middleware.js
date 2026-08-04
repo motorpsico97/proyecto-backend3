@@ -1,5 +1,11 @@
+const logger = require('../utils/logger');
+
 const notFound = (req, res, next) => {
     const error = new Error(`Ruta no encontrada: ${req.originalUrl}`);
+    logger.warn('ruta no encontrada', {
+        method: req.method,
+        path: req.originalUrl,
+    });
     res.status(404);
     next(error);
 };
@@ -17,6 +23,13 @@ const errorHandler = (err, req, res, next) => {
         statusCode = 400;
         message = 'Ya existe un registro con ese valor unico';
     }
+
+    logger.error('error de solicitud', {
+        method: req.method,
+        path: req.originalUrl,
+        statusCode,
+        message,
+    });
 
     res.status(statusCode).json({
         message,
