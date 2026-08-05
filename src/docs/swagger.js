@@ -13,7 +13,7 @@ const options = {
         url: 'http://localhost:8080',
       },
     ],
-    tags: [{ name: 'Auth' }, { name: 'Users' }, { name: 'Products' }],
+    tags: [{ name: 'Auth' }, { name: 'Users' }, { name: 'Products' }, { name: 'Cart' }],
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -58,6 +58,64 @@ const options = {
               type: 'object',
               description: 'Contenido principal de la respuesta.',
             },
+          },
+        },
+        CartItem: {
+          type: 'object',
+          properties: {
+            product: { type: 'string', example: '66af00000000000000001000' },
+            title: { type: 'string', example: 'Teclado mecanico' },
+            price: { type: 'number', example: 45000 },
+            quantity: { type: 'number', example: 2 },
+          },
+        },
+        CartSummary: {
+          type: 'object',
+          properties: {
+            _id: { type: 'string', example: '66af00000000000000000001' },
+            user: { type: 'string', example: '66af00000000000000000002' },
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/CartItem' },
+            },
+            itemCount: { type: 'number', example: 2 },
+            subtotal: { type: 'number', example: 90000 },
+          },
+        },
+        CartCreateBody: {
+          type: 'object',
+          properties: {
+            productId: { type: 'string', example: '66af00000000000000001000' },
+            quantity: { type: 'number', example: 2 },
+          },
+        },
+        CartAddItemBody: {
+          type: 'object',
+          required: ['productId'],
+          properties: {
+            productId: { type: 'string', example: '66af00000000000000001000' },
+            quantity: { type: 'number', example: 2 },
+          },
+        },
+        CartUpdateBody: {
+          type: 'object',
+          required: ['quantity'],
+          properties: {
+            quantity: { type: 'number', example: 3 },
+          },
+        },
+        CartResponse: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', example: 'Producto agregado al carrito.' },
+            cartId: { type: 'string', example: '66af00000000000000000001' },
+            cart: { $ref: '#/components/schemas/CartSummary' },
+          },
+        },
+        CartGetResponse: {
+          type: 'object',
+          properties: {
+            cart: { $ref: '#/components/schemas/CartSummary' },
           },
         },
         ErrorResponse: {

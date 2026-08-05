@@ -13,15 +13,16 @@ API REST para autenticacion, usuarios y productos, construida con Node.js, Expre
 7. [Instalacion y ejecucion](#instalacion-y-ejecucion)
 8. [Scripts disponibles](#scripts-disponibles)
 9. [Autenticacion y autorizacion](#autenticacion-y-autorizacion)
-10. [Documentacion Swagger](#documentacion-swagger)
-11. [Logs estructurados](#logs-estructurados)
-12. [Formato de respuestas](#formato-de-respuestas)
-13. [Endpoints](#endpoints)
-14. [Ejemplos fake y reales](#ejemplos-fake-y-reales)
-15. [Pruebas automatizadas](#pruebas-automatizadas)
-16. [Docker](#docker)
-17. [Errores comunes y troubleshooting](#errores-comunes-y-troubleshooting)
-18. [Notas de seguridad y produccion](#notas-de-seguridad-y-produccion)
+10. [Carrito de compras](#carrito-de-compras)
+11. [Documentacion Swagger](#documentacion-swagger)
+12. [Logs estructurados](#logs-estructurados)
+13. [Formato de respuestas](#formato-de-respuestas)
+14. [Endpoints](#endpoints)
+15. [Ejemplos fake y reales](#ejemplos-fake-y-reales)
+16. [Pruebas automatizadas](#pruebas-automatizadas)
+17. [Docker](#docker)
+18. [Errores comunes y troubleshooting](#errores-comunes-y-troubleshooting)
+19. [Notas de seguridad y produccion](#notas-de-seguridad-y-produccion)
 
 ## Resumen
 
@@ -31,6 +32,7 @@ La aplicacion expone endpoints para:
 - Perfil del usuario autenticado.
 - CRUD de usuarios (solo administradores).
 - CRUD de productos (lectura publica, escritura solo administradores).
+- Carrito de compras persistente por usuario autenticado.
 - Health checks para monitoreo.
 - Documentacion Swagger en entorno no productivo.
 
@@ -78,9 +80,11 @@ Cliente -> Route -> Middleware(s) -> Controller -> DAO -> MongoDB
 │   │   └── db.js
 │   ├── controllers/
 │   │   ├── auth.controller.js
+│   │   ├── cart.controller.js
 │   │   ├── product.controller.js
 │   │   └── user.controller.js
 │   ├── dao/
+│   │   ├── cart.dao.js
 │   │   ├── index.js
 │   │   ├── product.dao.js
 │   │   └── user.dao.js
@@ -90,11 +94,13 @@ Cliente -> Route -> Middleware(s) -> Controller -> DAO -> MongoDB
 │   │   ├── auth.middleware.js
 │   │   └── error.middleware.js
 │   ├── models/
+│   │   ├── Cart.js
 │   │   ├── Product.js
 │   │   └── User.js
 │   ├── routes/
 │   │   ├── adoption.router.js
 │   │   ├── auth.routes.js
+│   │   ├── cart.routes.js
 │   │   ├── index.js
 │   │   ├── product.routes.js
 │   │   └── user.routes.js
@@ -229,6 +235,232 @@ Middlewares:
 - `protect`: valida JWT y carga `req.user`.
 - `authorize('admin')`: limita acceso por rol.
 
+## Carrito de compras
+
+La API incorpora un carrito de compras por usuario autenticado. Cada usuario tiene su propio carrito y puede:
+
+- ver los productos agregados
+- agregar productos con una cantidad determinada
+- actualizar la cantidad de un item existente
+- eliminar un item del carrito
+- vaciar todo el carrito
+
+### Comportamiento del carrito
+
+- Requiere autenticacion mediante JWT o cookie `token`.
+- Cada item guarda el titulo, precio y cantidad del producto.
+- El subtotal se calcula automaticamente como la suma de `precio * cantidad`.
+- El contador de items devuelve la cantidad total de unidades en el carrito.
+
+### Endpoints del carrito
+
+Base: `/api/cart`
+
+- `POST /api/cart` → crea el carrito del usuario autenticado.
+- `GET /api/cart/:cartId` → obtiene el carrito del usuario autenticado.
+- `POST /api/cart/:cartId/items` → agrega un producto al carrito.
+- `PUT /api/cart/:cartId/items/:productId` → actualiza la cantidad de un producto dentro del carrito.
+- `DELETE /api/cart/:cartId/items/:productId` → elimina un producto del carrito.
+- `DELETE /api/cart/:cartId` → vacia el carrito completo.
+
+### Ejemplo: crear carrito
+
+```bash
+curl -X POST http://localhost:8080/api/cart \
+  -H "Authorization: Bearer <jwt>"
+```
+
+Respuesta esperada:
+
+```json
+{
+  "message": "Carrito creado.",
+  "cartId": "66af00000000000000000001",
+  "cart": {
+    "_id": "66af00000000000000000001",
+    "user": "66af00000000000000000002",
+    "items": [],
+    "itemCount": 0,
+    "subtotal": 0
+  }
+}
+```
+
+### Ejemplo: crear carrito y agregar un producto
+
+```bash
+curl -X POST http://localhost:8080/api/cart \
+  -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "productId": "66af00000000000000001000",
+    "quantity": 2
+  }'
+```
+
+Respuesta esperada:
+
+```json
+{
+  "message": "Carrito creado con producto.",
+  "cartId": "66af00000000000000000001",
+  "cart": {
+    "_id": "66af00000000000000000001",
+    "user": "66af00000000000000000002",
+    "items": [
+      {
+        "product": "66af00000000000000001000",
+        "title": "Teclado mecanico",
+        "price": 45000,
+        "quantity": 2
+      }
+    ],
+    "itemCount": 2,
+    "subtotal": 90000
+  }
+}
+```
+
+### Ejemplo: agregar producto al carrito
+
+```bash
+curl -X POST http://localhost:8080/api/cart/66af00000000000000000001/items \
+  -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "productId": "66af00000000000000001000",
+    "quantity": 2
+  }'
+```
+
+Respuesta esperada:
+
+```json
+{
+  "message": "Producto agregado al carrito.",
+  "cartId": "66af00000000000000000001",
+  "cart": {
+    "_id": "66af00000000000000000001",
+    "user": "66af00000000000000000002",
+    "items": [
+      {
+        "product": "66af00000000000000001000",
+        "title": "Teclado mecanico",
+        "price": 45000,
+        "quantity": 2
+      }
+    ],
+    "itemCount": 2,
+    "subtotal": 90000
+  }
+}
+```
+
+### Ejemplo: ver carrito
+
+```bash
+curl http://localhost:8080/api/cart/66af00000000000000000001 \
+  -H "Authorization: Bearer <jwt>"
+```
+
+Respuesta esperada:
+
+```json
+{
+  "cart": {
+    "_id": "66af00000000000000000001",
+    "user": "66af00000000000000000002",
+    "items": [
+      {
+        "product": "66af00000000000000001000",
+        "title": "Teclado mecanico",
+        "price": 45000,
+        "quantity": 2
+      }
+    ],
+    "itemCount": 2,
+    "subtotal": 90000
+  }
+}
+```
+
+### Ejemplo: actualizar cantidad de un producto
+
+```bash
+curl -X PUT http://localhost:8080/api/cart/66af00000000000000000001/items/66af00000000000000001000 \
+  -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "quantity": 3
+  }'
+```
+
+Respuesta esperada:
+
+```json
+{
+  "message": "Cantidad actualizada.",
+  "cart": {
+    "_id": "66af00000000000000000001",
+    "user": "66af00000000000000000002",
+    "items": [
+      {
+        "product": "66af00000000000000001000",
+        "title": "Teclado mecanico",
+        "price": 45000,
+        "quantity": 3
+      }
+    ],
+    "itemCount": 3,
+    "subtotal": 135000
+  }
+}
+```
+
+### Ejemplo: eliminar un producto del carrito
+
+```bash
+curl -X DELETE http://localhost:8080/api/cart/66af00000000000000000001/items/66af00000000000000001000 \
+  -H "Authorization: Bearer <jwt>"
+```
+
+Respuesta esperada:
+
+```json
+{
+  "message": "Producto eliminado del carrito.",
+  "cart": {
+    "_id": "66af00000000000000000001",
+    "user": "66af00000000000000000002",
+    "items": [],
+    "itemCount": 0,
+    "subtotal": 0
+  }
+}
+```
+
+### Ejemplo: vaciar todo el carrito
+
+```bash
+curl -X DELETE http://localhost:8080/api/cart/66af00000000000000000001 \
+  -H "Authorization: Bearer <jwt>"
+```
+
+Respuesta esperada:
+
+```json
+{
+  "message": "Carrito vaciado.",
+  "cart": {
+    "_id": "66af00000000000000000001",
+    "user": "66af00000000000000000002",
+    "items": [],
+    "itemCount": 0,
+    "subtotal": 0
+  }
+}
+```
+
 ## Documentacion Swagger
 
 - Disponible en `/api/docs`.
@@ -237,6 +469,100 @@ Middlewares:
 ```json
 { "message": "Documentacion no disponible en produccion." }
 ```
+
+### Schemas definidos
+
+La documentacion de Swagger usa componentes reutilizables definidos en `src/docs/swagger.js`. Estos schemas permiten describir con precision las estructuras de entrada y salida de la API.
+
+#### 1) `RegisterBody`
+Schema para registrar un usuario.
+
+Campos:
+- `name`: nombre del usuario.
+- `email`: correo electronico unico.
+- `password`: clave de acceso.
+- `role`: rol opcional del usuario, por ejemplo `admin`.
+
+#### 2) `LoginBody`
+Schema para iniciar sesion.
+
+Campos:
+- `email`: correo electronico registrado.
+- `password`: clave del usuario.
+
+#### 3) `ProductBody`
+Schema para crear o actualizar un producto.
+
+Campos:
+- `title`: titulo del producto.
+- `price`: precio del producto.
+- `stock`: stock disponible del producto.
+
+#### 4) `CartItem`
+Schema para representar un item dentro del carrito.
+
+Campos:
+- `product`: id del producto asociado.
+- `title`: titulo del producto.
+- `price`: precio unitario del producto.
+- `quantity`: cantidad seleccionada para ese producto.
+
+#### 5) `CartSummary`
+Schema principal del carrito.
+
+Campos:
+- `_id`: id del carrito.
+- `user`: id del usuario propietario del carrito.
+- `items`: lista de items contenidos en el carrito.
+- `itemCount`: cantidad total de unidades en el carrito.
+- `subtotal`: suma total del valor del carrito.
+
+#### 6) `CartCreateBody`
+Schema para crear un carrito y, opcionalmente, agregar un producto desde el mismo request.
+
+Campos:
+- `productId`: id del producto a agregar al crear el carrito.
+- `quantity`: cantidad del producto a agregar.
+
+#### 7) `CartAddItemBody`
+Schema para agregar un producto a un carrito existente.
+
+Campos:
+- `productId`: id del producto a agregar.
+- `quantity`: cantidad de unidades a agregar.
+
+#### 8) `CartUpdateBody`
+Schema para actualizar la cantidad de un producto ya existente en el carrito.
+
+Campos:
+- `quantity`: nueva cantidad del producto dentro del carrito.
+
+#### 9) `CartResponse`
+Schema de respuesta para operaciones de carrito como agregar, crear, actualizar, eliminar y vaciar.
+
+Campos:
+- `message`: mensaje descriptivo de la operacion.
+- `cartId`: id del carrito involucrado.
+- `cart`: objeto con el resumen completo del carrito.
+
+#### 10) `CartGetResponse`
+Schema de respuesta para consultar un carrito.
+
+Campos:
+- `cart`: objeto con el resumen actual del carrito.
+
+#### 11) `StandardResponse`
+Schema generico para respuestas de la API.
+
+Campos:
+- `message`: mensaje de la respuesta.
+- `data`: contenido principal de la respuesta.
+
+#### 12) `ErrorResponse`
+Schema generico para errores de la API.
+
+Campos:
+- `message`: descripcion del error.
 
 Importante:
 
@@ -349,6 +675,12 @@ Base: `/api`
 
 - `GET /auth/me`
 - `POST /auth/logout`
+- `POST /cart`
+- `GET /cart/:cartId`
+- `POST /cart/:cartId/items`
+- `PUT /cart/:cartId/items/:productId`
+- `DELETE /cart/:cartId/items/:productId`
+- `DELETE /cart/:cartId`
 
 ### Requieren rol admin
 
@@ -623,6 +955,7 @@ La suite incluye pruebas de:
 - capa DAO
 - utilidades de respuesta
 - enrutado principal
+- carrito de compras
 
 ## Docker
 

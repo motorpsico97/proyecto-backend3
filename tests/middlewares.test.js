@@ -53,6 +53,22 @@ describe('auth.middleware unit', () => {
         expect(res.json).toHaveBeenCalledWith({ message: 'Token invalido o expirado.' });
     });
 
+    test('protect usa el token de cookies cuando no hay headers', async () => {
+        jwt.verify.mockReturnValue({ id: '1' });
+        User.findById.mockReturnValue({
+            select: jest.fn().mockResolvedValue({ _id: '1', role: 'user' }),
+        });
+
+        const req = { cookies: { token: 'cookie-token' } };
+        const res = createRes();
+        const next = jest.fn();
+
+        await protect(req, res, next);
+
+        expect(next).toHaveBeenCalled();
+        expect(jwt.verify).toHaveBeenCalledWith('cookie-token', process.env.JWT_SECRET);
+    });
+
     test('authorize deja pasar cuando el rol coincide', () => {
         const middleware = authorize('admin');
         const req = { user: { role: 'admin' } };
@@ -127,6 +143,19 @@ describe('error.middleware unit', () => {
         const req = {};
         const res = createRes();
         res.statusCode = 404;
+
+        errorHandler(err, req, res, jest.fn());
+
+        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.json).toHaveBeenCalledWith(
+            expect.objectContaining({ message: 'not found' })
+        );
+    });
+
+    test('errorHandler usa err.statusCode cuando no hay statusCode previo', () => {
+        const err = { message: 'not found', statusCode: 404, stack: 'stack' };
+        const req = {};
+        const res = createRes();
 
         errorHandler(err, req, res, jest.fn());
 
