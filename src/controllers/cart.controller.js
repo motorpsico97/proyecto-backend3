@@ -6,6 +6,7 @@ const {
     removeCartItemDao,
     clearCartDao,
 } = require('../dao');
+const { sendResponse } = require('../utils/response.js');
 
 const buildCartResponse = (cart) => {
     const items = Array.isArray(cart?.items) ? cart.items : [];
@@ -28,24 +29,24 @@ const createCart = async (req, res, next) => {
 
         if (productId) {
             if (!mongoose.Types.ObjectId.isValid(productId)) {
-                return res.status(400).json({ message: 'ID invalido' });
+                return sendResponse(res, 400, { message: 'ID invalido' });
             }
 
             if (!Number.isInteger(quantity) || quantity < 1) {
-                return res.status(400).json({ message: 'quantity debe ser un entero mayor a 0.' });
+                return sendResponse(res, 400, { message: 'quantity debe ser un entero mayor a 0.' });
             }
 
             const { cart, item, product, outOfStock } = await upsertCartItemDao(req.user._id, productId, quantity);
 
             if (!cart || !product) {
-                return res.status(404).json({ message: 'Producto no encontrado.' });
+                return sendResponse(res, 404, { message: 'Producto no encontrado.' });
             }
 
             if (outOfStock) {
-                return res.status(400).json({ message: 'No hay suficiente stock disponible.' });
+                return sendResponse(res, 400, { message: 'No hay suficiente stock disponible.' });
             }
 
-            return res.status(201).json({
+            return sendResponse(res, 201, {
                 message: 'Carrito creado con producto.',
                 cartId: cart._id,
                 cart: {
@@ -59,7 +60,7 @@ const createCart = async (req, res, next) => {
         }
 
         const cart = await getCartByUserDao(req.user._id);
-        return res.status(201).json({
+        return sendResponse(res, 201, {
             message: 'Carrito creado.',
             cartId: cart._id,
             ...buildCartResponse(cart),
@@ -74,16 +75,19 @@ const getCart = async (req, res, next) => {
         const { cartId } = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(cartId)) {
-            return res.status(400).json({ message: 'ID de carrito invalido' });
+            return sendResponse(res, 400, { message: 'ID de carrito invalido' });
         }
 
         const cart = await getCartByUserDao(req.user._id, cartId);
 
         if (!cart || cart._id.toString() !== cartId) {
-            return res.status(404).json({ message: 'Carrito no encontrado.' });
+            return sendResponse(res, 404, { message: 'Carrito no encontrado.' });
         }
 
-        return res.status(200).json(buildCartResponse(cart));
+        return sendResponse(res, 200, {
+            message: 'Carrito obtenido.',
+            ...buildCartResponse(cart),
+        });
     } catch (error) {
         return next(error);
     }
@@ -95,32 +99,32 @@ const addItemToCart = async (req, res, next) => {
         const { productId, quantity = 1 } = req.body;
 
         if (!productId) {
-            return res.status(400).json({ message: 'productId es obligatorio.' });
+            return sendResponse(res, 400, { message: 'productId es obligatorio.' });
         }
 
         if (!mongoose.Types.ObjectId.isValid(cartId)) {
-            return res.status(400).json({ message: 'ID de carrito invalido' });
+            return sendResponse(res, 400, { message: 'ID de carrito invalido' });
         }
 
         if (!mongoose.Types.ObjectId.isValid(productId)) {
-            return res.status(400).json({ message: 'ID invalido' });
+            return sendResponse(res, 400, { message: 'ID invalido' });
         }
 
         if (!Number.isInteger(quantity) || quantity < 1) {
-            return res.status(400).json({ message: 'quantity debe ser un entero mayor a 0.' });
+            return sendResponse(res, 400, { message: 'quantity debe ser un entero mayor a 0.' });
         }
 
         const { cart, item, product, outOfStock } = await upsertCartItemDao(req.user._id, productId, quantity, cartId);
 
         if (!cart || !product) {
-            return res.status(404).json({ message: 'Producto no encontrado.' });
+            return sendResponse(res, 404, { message: 'Producto no encontrado.' });
         }
 
         if (outOfStock) {
-            return res.status(400).json({ message: 'No hay suficiente stock disponible.' });
+            return sendResponse(res, 400, { message: 'No hay suficiente stock disponible.' });
         }
 
-        return res.status(201).json({
+        return sendResponse(res, 201, {
             message: 'Producto agregado al carrito.',
             cartId: cart._id,
             cart: {
@@ -142,32 +146,32 @@ const updateCartItem = async (req, res, next) => {
         const { quantity } = req.body;
 
         if (!mongoose.Types.ObjectId.isValid(cartId)) {
-            return res.status(400).json({ message: 'ID de carrito invalido' });
+            return sendResponse(res, 400, { message: 'ID de carrito invalido' });
         }
 
         if (!mongoose.Types.ObjectId.isValid(productId)) {
-            return res.status(400).json({ message: 'ID invalido' });
+            return sendResponse(res, 400, { message: 'ID invalido' });
         }
 
         if (!Number.isInteger(quantity) || quantity < 1) {
-            return res.status(400).json({ message: 'quantity debe ser un entero mayor a 0.' });
+            return sendResponse(res, 400, { message: 'quantity debe ser un entero mayor a 0.' });
         }
 
         const { cart, item, outOfStock } = await updateCartItemQuantityDao(req.user._id, productId, quantity, cartId);
 
         if (!cart || cart._id.toString() !== cartId) {
-            return res.status(404).json({ message: 'Carrito no encontrado.' });
+            return sendResponse(res, 404, { message: 'Carrito no encontrado.' });
         }
 
         if (!item) {
-            return res.status(404).json({ message: 'Producto no encontrado en el carrito.' });
+            return sendResponse(res, 404, { message: 'Producto no encontrado en el carrito.' });
         }
 
         if (outOfStock) {
-            return res.status(400).json({ message: 'No hay suficiente stock disponible.' });
+            return sendResponse(res, 400, { message: 'No hay suficiente stock disponible.' });
         }
 
-        return res.status(200).json({
+        return sendResponse(res, 200, {
             message: 'Cantidad actualizada.',
             ...buildCartResponse(cart),
         });
@@ -181,24 +185,24 @@ const removeCartItem = async (req, res, next) => {
         const { cartId, productId } = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(cartId)) {
-            return res.status(400).json({ message: 'ID de carrito invalido' });
+            return sendResponse(res, 400, { message: 'ID de carrito invalido' });
         }
 
         if (!mongoose.Types.ObjectId.isValid(productId)) {
-            return res.status(400).json({ message: 'ID invalido' });
+            return sendResponse(res, 400, { message: 'ID invalido' });
         }
 
         const { cart, removed } = await removeCartItemDao(req.user._id, productId, cartId);
 
         if (!cart || cart._id.toString() !== cartId) {
-            return res.status(404).json({ message: 'Carrito no encontrado.' });
+            return sendResponse(res, 404, { message: 'Carrito no encontrado.' });
         }
 
         if (!removed) {
-            return res.status(404).json({ message: 'Producto no encontrado en el carrito.' });
+            return sendResponse(res, 404, { message: 'Producto no encontrado en el carrito.' });
         }
 
-        return res.status(200).json({
+        return sendResponse(res, 200, {
             message: 'Producto eliminado del carrito.',
             ...buildCartResponse(cart),
         });
@@ -212,16 +216,16 @@ const clearCart = async (req, res, next) => {
         const { cartId } = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(cartId)) {
-            return res.status(400).json({ message: 'ID de carrito invalido' });
+            return sendResponse(res, 400, { message: 'ID de carrito invalido' });
         }
 
         const cart = await clearCartDao(req.user._id, cartId);
 
         if (!cart || cart._id.toString() !== cartId) {
-            return res.status(404).json({ message: 'Carrito no encontrado.' });
+            return sendResponse(res, 404, { message: 'Carrito no encontrado.' });
         }
 
-        return res.status(200).json({
+        return sendResponse(res, 200, {
             message: 'Carrito vaciado.',
             ...buildCartResponse(cart),
         });

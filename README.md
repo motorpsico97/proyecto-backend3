@@ -16,13 +16,14 @@ API REST para autenticacion, usuarios y productos, construida con Node.js, Expre
 10. [Carrito de compras](#carrito-de-compras)
 11. [Documentacion Swagger](#documentacion-swagger)
 12. [Logs estructurados](#logs-estructurados)
-13. [Formato de respuestas](#formato-de-respuestas)
-14. [Endpoints](#endpoints)
-15. [Ejemplos fake y reales](#ejemplos-fake-y-reales)
-16. [Pruebas automatizadas](#pruebas-automatizadas)
-17. [Docker](#docker)
-18. [Errores comunes y troubleshooting](#errores-comunes-y-troubleshooting)
-19. [Notas de seguridad y produccion](#notas-de-seguridad-y-produccion)
+13. [response.js](#responsejs)
+14. [Formato de respuestas](#formato-de-respuestas)
+15. [Endpoints](#endpoints)
+16. [Ejemplos fake y reales](#ejemplos-fake-y-reales)
+17. [Pruebas automatizadas](#pruebas-automatizadas)
+18. [Docker](#docker)
+19. [Errores comunes y troubleshooting](#errores-comunes-y-troubleshooting)
+20. [Notas de seguridad y produccion](#notas-de-seguridad-y-produccion)
 
 ## Resumen
 
@@ -624,9 +625,47 @@ Cada tipo de evento queda registrado de forma individual. Por ejemplo:
 - Integracion en errores: `src/middlewares/error.middleware.js`
 - Integracion en arranque: `src/server.js`
 
+## response.js
+
+El helper de respuestas se encuentra en [src/utils/response.js](src/utils/response.js) y centraliza la forma en que la API devuelve JSON estandarizado.
+
+### Funciones disponibles
+
+- `buildResponse({ message, data, meta, ...rest })`: arma el payload base con formato consistente.
+- `sendResponse(res, statusCode, payload)`: envia la respuesta HTTP con el status correspondiente.
+
+### Ejemplo de uso
+
+```js
+const { sendResponse } = require('../utils/response');
+
+return sendResponse(res, 201, {
+  message: 'Usuario creado.',
+  data: {
+    user: { id: user._id, name: user.name }
+  }
+});
+```
+
+Esto produce un JSON con estructura similar a:
+
+```json
+{
+  "message": "Usuario creado.",
+  "data": {
+    "user": {
+      "id": "66af00000000000000000001",
+      "name": "Admin"
+    }
+  }
+}
+```
+
+El helper tambien permite incluir campos adicionales como `cart`, `cartId` o `token` sin romper el formato base.
+
 ## Formato de respuestas
 
-La API tiene dos estilos de respuesta porque conviven controladores con y sin helper `sendResponse`:
+La API usa un formato de respuesta consistente en los controladores que emplean el helper `sendResponse`, y permite combinar `message`, `data`, `meta` y campos adicionales segun el caso:
 
 1. Estilo estandarizado (principalmente usuarios):
 

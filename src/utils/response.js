@@ -1,7 +1,8 @@
-const buildResponse = ({ message, data, meta = null }) => ({
+const buildResponse = ({ message, data, meta = null, ...rest }) => ({
     message,
     ...(data !== undefined ? { data } : {}),
     ...(meta ? { meta } : {}),
+    ...rest,
 });
 
 const sendResponse = (res, statusCode, payload) => {
